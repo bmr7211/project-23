@@ -15,7 +15,7 @@ export const locations = [
     { 
         id: "location02", 
         label: "Location02", 
-        point: { x: 70, y: 46 }, 
+        point: { x: 70, y: 66 }, 
         video: "/location/location02.jpeg", 
         member: { 
                 name: "Yeon Ji Seo", 
@@ -28,7 +28,7 @@ export const locations = [
     { 
         id: "location03", 
         label: "Location03", 
-        point: { x: 38, y: 30 }, 
+        point: { x: 48, y: 55 }, 
         video: "/location/location03.jpg", 
         member: { 
             name: "Ji Yoon Shin", 

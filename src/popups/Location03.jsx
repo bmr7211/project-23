@@ -140,7 +140,7 @@ export default function Location03() {
   return (
     <div className="location" ref={rootRef}>
       <div className="earth">
-        <img className="earth-img" src="public/locations/earth.jpg" alt="Earth" />
+        <img className="earth-img" src="/locations/earth.jpg" alt="Earth" />
         {active && (
           <div className="card" key={active.id}>
             <p className="card-city">{active.label}</p>

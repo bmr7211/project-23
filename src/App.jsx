@@ -28,7 +28,7 @@ export default function App() {
         <Route path="/" element={null} />
         <Route path="/album" element={popup(Album01, 0)} />
         <Route path="/project" element={popup(Project02, 1)} />
-        <Route path="/location/*" element={popup(Location03, 2)} />
+        <Route path="/location/*" element={popup(Location03, null)} />
         <Route path="/lookbook/*" element={popup(Lookbook04, 3)} />
         <Route path="/archive/*" element={popup(Archive05, 4, true)} />
         <Route path="*" element={<Navigate to="/" replace />} />

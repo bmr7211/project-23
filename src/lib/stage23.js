@@ -6,7 +6,7 @@ const UP = 0.5;
 const CHARS = [
   { id: '01', href: '/album', body: '#780000', video: null, leather: { type: 0, color: [.03, .03, .034], gloss: 1.0, bump: 30 } },
   { id: '02', href: '/project', body: '#939100', video: null, leather: { type: 1, color: [.27, .035, .04], gloss: .35, bump: 2.5 } },
-  { id: '03', href: '/location', body: '#009552', video: null, leather: { type: 2, color: [.13, .085, .06], gloss: .5, bump: 5 } },
+  { id: '03', href: '/location', noFlood: true, body: '#009552', video: null, leather: { type: 2, color: [.13, .085, .06], gloss: .5, bump: 5 } },
   { id: '04', href: '/lookbook', body: '#00458a', video: null, leather: { type: 3, color: [.095, .1, .105], gloss: .6, bump: 4 } },
   { id: '05', href: '/archive', noFlood: true, body: '#8d008f', video: null, leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
 ];
@@ -264,7 +264,7 @@ const frame = now => {
     : (S.flood < .5 ? 4 * S.flood ** 3 : 1 - Math.pow(-2 * S.flood + 2, 3) / 2); 
     figLayer.style.opacity = (S.pageOpen && !S.panel) ? '0' : '1';
     if (!G) return;
-    
+
     // gl
     let paint = 0, A = [0, 0], B = [0, 0], vel = 0;
     if (S.locked && S.last) {

@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { PAGES } from '../data/archive';
+import { panelRect } from '../lib/panel.js';
 import './Archive05.css';
 
 const FLIP_MS = 700;
@@ -56,20 +57,14 @@ function curlFlip(flip, dir, corner) {
   return true;
 }
 
-// 창 높이 기준으로 페이지 크기 계산
-function pageSize(vh) {
-  const h = Math.round(Math.min(680, vh * 0.78));
-  return { h, w: Math.round((h * 210) / 297) };
-}
-
 export default function Archive05() {
-  // 창 크기: 창 높이를 기억해두고, 바뀌면 다시 계산
-  const [vh, setVh] = useState(window.innerHeight);
+  // 창 크기: 팝업 사각형(panelRect)을 기억해두고, 창이 바뀌면 다시 계산
+  const [panel, setPanel] = useState(() => panelRect());
   useEffect(() => {
     let timer;
     const onResize = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => setVh(window.innerHeight), 200); // 다 줄이고 0.2초 뒤에 한 번만
+      timer = setTimeout(() => setPanel(panelRect()), 200); // 다 줄이고 0.2초 뒤에 한 번만
     };
     window.addEventListener('resize', onResize);
     return () => {
@@ -77,7 +72,9 @@ export default function Archive05() {
       clearTimeout(timer);
     };
   }, []);
-  const { w: pageW, h: pageH } = pageSize(vh);
+
+  const pageW = Math.round(panel.width / 2); // 펼쳤을 때 두 장 = 팝업 너비
+  const pageH = Math.round(panel.height); // 팝업 높이 그대로
 
   const bookRef = useRef(null);
   const pageRef = useRef(0); // 지금 보는 페이지
