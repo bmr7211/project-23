@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home00 from './components/Home00';
 import PopupShell from './popups/PopupShell';
+import Bgm from './components/Bgm.jsx';
 
 const Album01 = lazy(() => import('./popups/Album01'));
 const Project02  = lazy(() => import('./popups/Project02'));
@@ -24,6 +25,7 @@ export default function App() {
       {/* 런웨이는 언마운트 X */}
       <Home00 paused={popupOpen} />
 
+      <Bgm/>
       <Routes>
         <Route path="/" element={null} />
         <Route path="/album" element={popup(Album01, 0)} />

@@ -1,0 +1,21 @@
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9999; /* 스테이지, 팝업보다 위 */
+  background: #000;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: opacity 0.6s ease;
+}
+
+.intro.is-fading {
+  opacity: 0;
+  pointer-events: none; /* 사라지는 중엔 클릭이 뒤로 통과 */
+}
+
+.intro-title {
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.3em;
+}
