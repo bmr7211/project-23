@@ -1,0 +1,67 @@
+.album {
+  position: relative;
+  height: 100%;
+  touch-action: none;
+}
+
+.album-label {
+  position: absolute;
+  left: 28px;
+  bottom: 24px;
+  z-index: 2;
+  margin: 0;
+  display: flex;
+  gap: 10px;
+  font: 11px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.08em;
+  color: #f2efea;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+
+.album-label.is-on {
+  opacity: 1;
+  transform: none;
+}
+
+.album-label-artist {
+  opacity: 0.5;
+}
+
+.album-lyrics {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  font: 12px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.06em;
+  color: #f2efea;
+}
+
+.album-lyrics p {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  white-space: nowrap;
+  transform-origin: 0 0;
+}
+
+.album-debug {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.album-debug span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 1px solid #ff3b3b;
+  border-radius: 50%;
+}

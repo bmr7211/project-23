@@ -1,0 +1,49 @@
+.archive {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.mag {
+  position: relative;
+  pointer-events: none;
+  cursor: pointer;
+  /* 책 그림자: 보이는 페이지 모양을 따라 생김 */
+  filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.35));
+}
+
+.mag-page {
+  background: #f4f1ec;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.mag-page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 제본선 음영: 가운데 접히는 쪽을 살짝 어둡게 */
+.mag-page.--left::after,
+.mag-page.--right::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mag-page.--left::after {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.18), transparent 8%);
+}
+
+.mag-page.--right::after {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.18), transparent 8%);
+}

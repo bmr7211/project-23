@@ -1,0 +1,63 @@
+/* ===== 팝업 화면 (5장) ===== */
+.lookbook-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 728px;
+  margin-top: 40px;
+  margin-inline: auto;
+  align-self: center;
+}
+
+.lookbook-thumb {
+  grid-column: span 2;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  min-width: 0;
+}
+.lookbook-thumb:nth-child(4) { grid-column: 2 / span 2; }
+.lookbook-thumb:nth-child(5) { grid-column: 4 / span 2; }
+
+.lookbook-thumb img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+}
+
+/* ===== 상세 화면 ===== */
+.lookbook-detail {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.lookbook-back {
+  align-self: flex-start;
+  color: #fff;
+  margin-top: 5px;
+  margin-left: 5px;
+  background: none;
+  border: none;
+}
+
+.lookbook-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2열 → 위 2장, 아래 2장 */
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+.lookbook-detail-grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+}

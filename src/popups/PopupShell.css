@@ -1,0 +1,72 @@
+.popup-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    /*background: center;*/
+    /*animation: popup-fade 0.15s ease-out;*/
+}
+
+.popup-panel {
+  position: relative;
+  overflow: hidden;
+  width: min(1100px, 92vw);
+  height: min(720px, 86vh);
+  background: transparent;
+  color: #f2efea;
+  box-shadow: 0 0 0 100vmax rgba(10, 9, 8, 0.25);
+  animation: popup-dim 0.15s ease-out;
+}
+
+.popup-close {
+    all: unset;
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    z-index: 10;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #f2efea
+}
+
+.popup-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    animation: popup-fade 0.5s ease-out 0.1s both;
+}
+
+.popup-panel.is-bare {
+  width: 100vw;
+  height: 100vh;
+  background: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.popup-panel.is-bare .popup-content {
+  height: 100%;
+}
+
+.popup-panel.is-bare .popup-close {
+  pointer-events: auto;
+}
+
+@keyframes popup-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes popup-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes popup-dim {
+  from { box-shadow: 0 0 0 100vmax rgba(10, 9, 8, 0); }
+  to   { box-shadow: 0 0 0 100vmax rgba(10, 9, 8, 0.25); }
+}

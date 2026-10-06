@@ -1,0 +1,23 @@
+.viewport { 
+    position: fixed; inset: 0; display: flex; 
+    align-items: center; justify-content: center; 
+    background: #fff; overflow: hidden;
+}
+
+.stage { 
+    position: relative; flex: none; 
+    width: 1280px; height: 720px; 
+    overflow: hidden; background: #fff; 
+    user-select: none;
+}
+
+.zone { 
+    position: absolute; left: 37%; top: 8%; 
+    width: 26%; height: 84%; background: #ffffff;
+}
+
+.logo { 
+    position: fixed; left: 32px; top: 28px; 
+    z-index: 6; font: 500 13px 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+    letter-spacing: .18em; color: #111; pointer-events: none;
+}
