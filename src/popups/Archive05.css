@@ -17,18 +17,101 @@
 }
 
 .mag-page {
-  background: #f4f1ec;
+  background: none;
   overflow: hidden;
   pointer-events: auto;
 }
 
-.mag-page img {
+/* 공통 틀 */
+.mp {
+  background: #fff;
+  --mag-red: #d4221c;
+  --mag-ink: #111;
+  --mag-display: 'Archivo Black', 'Noto Sans KR', sans-serif;
+  --mag-sans: 'Archivo', 'Noto Sans KR', sans-serif;
+  --mag-script: 'Mrs Saint Delafield', cursive;
+
+  position: absolute;
+  inset: 0;
+  color: var(--mag-ink);
+  font-family: var(--mag-sans);
+  font-size: calc(var(--u) * 2.4);
+  line-height: 1.45;
+}
+
+.mp--light { color: #fff; }
+
+.mp-body {
+  position: absolute;
+  inset: 0;
+}
+
+.mp-head {
+  position: absolute;
+  top: calc(var(--u) * 4);
+  left: calc(var(--u) * 6);
+  right: calc(var(--u) * 6);
+  display: flex;
+  padding-bottom: calc(var(--u) * 1.2);
+  border-bottom: 1px solid currentColor;
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 1.8);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mp--right .mp-head { justify-content: flex-end; }
+
+.mp-folio {
+  position: absolute;
+  bottom: calc(var(--u) * 4);
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 1.8);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mp--left .mp-folio { left: calc(var(--u) * 6); }
+.mp--right .mp-folio { right: calc(var(--u) * 6); }
+
+/* 공통 글자 스타일 (틀들이 같이 씀) */
+.mag-h {
+  margin: 0;
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 11);
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.mag-script {
+  margin: calc(var(--u) * -5) 0 0 calc(var(--u) * 10);
+  font-family: var(--mag-script);
+  font-size: calc(var(--u) * 14);
+  line-height: 1;
+  color: var(--mag-red);
+  transform: rotate(-6deg);
+}
+
+.mag-text { margin: calc(var(--u) * 4) 0 0; }
+
+/* 꽉 찬 사진 */
+.mp-fill {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
   pointer-events: none;
   user-select: none;
+}
+
+/* 확인용 */
+.mp-test {
+  position: absolute;
+  top: calc(var(--u) * 14);
+  left: calc(var(--u) * 6);
+  right: calc(var(--u) * 6);
 }
 
 /* 제본선 음영: 가운데 접히는 쪽을 살짝 어둡게 */
@@ -48,6 +131,10 @@
   background: linear-gradient(to right, rgba(0, 0, 0, 0.18), transparent 8%);
 }
 
+.mag-page.is-leaving::after {
+  display: none;
+}
+
 .mag-stack {
   position: absolute;
   top: 0;
@@ -58,4 +145,354 @@
 .mag > .stf__parent {
   position: relative;
   z-index: 1;
+}
+
+/* 틀: 표지 */
+.lay-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--u) * 5) calc(var(--u) * 5) calc(var(--u) * 7);
+}
+
+.lay-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.35),
+    transparent 30%,
+    transparent 60%,
+    rgba(0, 0, 0, 0.45)
+  );
+  pointer-events: none;
+}
+
+.lay-cover > * {
+  position: relative; /* 어두운 막 위로 올라오게 */
+}
+
+.cover-title {
+  --size: 15;
+  margin: 0;
+  align-self: center;
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * var(--size));
+  line-height: 0.82;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--mag-red);
+}
+
+.cover-issue {
+  margin: calc(var(--u) * 2) 0 0;
+  padding: calc(var(--u) * 0.8) 0;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 1.8);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.cover-script {
+  margin: calc(var(--u) * -3) 0 0 auto; /* 오른쪽으로 밀고 제목 쪽으로 살짝 겹치기 */
+}
+
+.cover-lines {
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 3.4);
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+/* 표지/뒤표지 넘길 때 빈 칸에 생기는 그림자 숨기기 */
+.mag.is-edge .stf__outerShadow,
+.mag.is-edge .stf__hardShadow,
+.mag.is-edge .stf__hardInnerShadow {
+  display: none;
+}
+
+/* 틀: 제목+글+사진 */
+.lay-story {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--u) * 10) calc(var(--u) * 6) calc(var(--u) * 9);
+}
+
+.story-kicker {
+  margin: 0 0 calc(var(--u) * 1.5);
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 1.8);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--mag-red);
+}
+
+.story-script {
+  margin-top: calc(var(--u) * -6);
+  margin-left: calc(var(--u) * 18);
+}
+
+.story-body {
+  margin-top: calc(var(--u) * 2);
+  column-count: 2;
+  column-gap: calc(var(--u) * 3);
+  font-size: calc(var(--u) * 2.1);
+  margin-top: 20px;
+}
+
+.story-body p {
+  margin: 0 0 calc(var(--u) * 1.2);
+}
+
+.story-photo {
+  flex: 1;
+  min-height: 0;
+  margin: calc(var(--u) * 3) 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.story-photo img {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.story-photo figcaption {
+  margin-top: calc(var(--u) * 1);
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: 0.04em;
+}
+
+/* 틀: 사진 2단 */
+.lay-photos {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 3);
+  padding: calc(var(--u) * 10) calc(var(--u) * 6) calc(var(--u) * 9);
+}
+
+.photos-item {
+  margin: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.photos-item:first-child {
+  flex: var(--split) 1 0;
+}
+
+.photos-item:last-child {
+  flex: calc(1 - var(--split)) 1 0;
+}
+
+.photos-item img {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.photos-item figcaption {
+  display: flex;
+  gap: calc(var(--u) * 1.2);
+  margin-top: calc(var(--u) * 1);
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: 0.04em;
+}
+
+.photos-no {
+  font-family: var(--mag-display);
+  color: var(--mag-red);
+}
+
+/* 틀: 꽉 찬 사진 + 필기체 */
+.full-script {
+  position: absolute;
+  margin: 0;
+  font-size: calc(var(--u) * var(--size));
+  white-space: nowrap;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  text-shadow: 0 calc(var(--u) * 0.3) calc(var(--u) * 1.5) rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.full-caption {
+  position: absolute;
+  bottom: calc(var(--u) * 4);
+  margin: 0;
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 캡션은 쪽 번호 반대편(제본선 쪽)에 */
+.mp--left .full-caption { right: calc(var(--u) * 6); }
+.mp--right .full-caption { left: calc(var(--u) * 6); }
+
+/* 틀: 글 단 */
+.lay-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--u) * 10) calc(var(--u) * 6) calc(var(--u) * 9);
+}
+
+.text-title {
+  margin: 0 0 calc(var(--u) * 3);
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 5.5);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.text-cols {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: calc(var(--u) * 3);
+  font-size: calc(var(--u) * 2.1);
+}
+
+.text-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.text-col p {
+  margin: 0 0 calc(var(--u) * 1.2);
+}
+
+.text-photo {
+  flex: 0 0 calc(var(--h) * 1%);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-photo--top {
+  margin: 0 0 calc(var(--u) * 2);
+}
+
+.text-photo--bottom {
+  margin: auto 0 0; /* 남는 공간을 위로 밀어내고 맨 아래에 붙기 */
+}
+
+.text-photo img {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.text-photo figcaption {
+  margin-top: calc(var(--u) * 0.8);
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: 0.04em;
+}
+
+/* 틀: 큰 글자 */
+.lay-letter {
+  position: absolute;
+  inset: 0;
+  margin-top: 10px;
+  padding: calc(var(--u) * 10) calc(var(--u) * 6) calc(var(--u) * 9);
+  overflow: hidden;
+  font-size: calc(var(--u) * 2.3);
+}
+
+.letter-big {
+  --size: 46;
+  float: left;
+  margin: calc(var(--u) * -1.5) calc(var(--u) * 2.5) calc(var(--u) * 1) calc(var(--u) * -0.8);
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * var(--size));
+  line-height: 0.78;
+  color: var(--mag-red);
+  text-transform: uppercase;
+}
+
+.letter-title {
+  margin: 0 0 calc(var(--u) * 2);
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 4.5);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.lay-letter p:not(.story-kicker) {
+  margin: 0 0 calc(var(--u) * 1.4);
+}
+
+/* 틀: 사진 그리드 */
+.lay-grid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--u) * 10) calc(var(--u) * 6) calc(var(--u) * 9);
+}
+
+.grid-box {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: calc(var(--u) * 1.5);
+}
+
+.grid-item {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.grid-item img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.grid-no {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.8);
+  font-family: var(--mag-display);
+  font-size: calc(var(--u) * 1.4);
+  color: #fff;
+  background: var(--mag-red);
+}
+
+.grid-note {
+  margin: calc(var(--u) * 2) 0 0;
+  font-size: calc(var(--u) * 1.6);
+  letter-spacing: 0.04em;
 }

@@ -11,10 +11,13 @@ const CHARS = [
   { id: '05', href: '/archive', photo: '/leathers/leather.jpg', noFlood: true, body: '#8d008f', video: '/walkers/album_walker.webm', leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
 ];
 const MIN_S = 0.2; // 왼쪽 끝 크기 (작을수록 멀어 보임)
-const MAX_S = 2.5; // 오른쪽 끝 크기 (1.65를 넘으면 위아래가 살짝 잘림)
+const MAX_S = 2.9; // 오른쪽 끝 크기 (1.65를 넘으면 위아래가 살짝 잘림)
 const PERSP = 1.0; // 원근 가속 정도 (0~1, 클수록 오른쪽에서 확 다가옴)
 const GROW = 1.3; // 클수록 왼쪽은 작게 유지되고 오른쪽에서 확 커짐
-const SPREAD = 1.1; // 클수록 사람 사이 간격이 넓어짐
+const SPREAD = 1.3; // 클수록 사람 사이 간격이 넓어짐
+const REPEAT = 1.2; // 보이는 인원 수
+const WALKERS = CHARS.length * REPEAT;
+const WALK_RATE = 1.15; // 걷는 속도
 
 const MODES = { pigment: 0, tear: 1, peel: 2 };
 
@@ -110,11 +113,14 @@ canvas.width = W; canvas.height = H;
 const figLayer = mk('div', 'position:absolute;inset:0;z-index:2;pointer-events:none;transition:opacity .6s;filter:drop-shadow(0 0 .8px rgba(255,255,255,.6))');
 const dbgLayer = mk('div', 'position:absolute;inset:0;z-index:4;pointer-events:none;display:none');
 
-const figs = CHARS.map((c, i) => {
+const ROSTER = Array.from({ length: WALKERS }, (_, k) => CHARS[k % CHARS.length]);
+const figs = ROSTER.map((c, i) => {
     const el = mk('div', `position:absolute;left:0;top:0;width:${BASE_W}px;height:${BASE_H}px;transform-origin:50% 100%;will-change:transform,opacity`, figLayer);
-    const f = { c, i, el, lag: 0, locked: false, p: 0, x: 0, y: 0, s: 1 };
+    const f = { c, i, el, ci: i % CHARS.length, lag: 0, locked: false, p: 0, x: 0, y: 0, s: 1 };
     if (c.video) {
-    const v = document.createElement('video'); Object.assign(v, { src: c.video, muted: true, loop: true, autoplay: true, playsInline: true });
+    const v = document.createElement('video'); 
+    Object.assign(v, { src: c.video, muted: true, loop: true, autoplay: true, playsInline: true });
+    v.playbackRate = v.defaultPlaybackRate = WALK_RATE;
     f.v = v;
     v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%'; el.appendChild(v);
     }
@@ -177,7 +183,9 @@ const onMove = e => { const p = toStage(e); S.mouse.x = p.x; S.mouse.y = p.y; S.
 const onLeave = () => { S.mouse.in = false; };
 const onClick = () => {
     if (S.locked && S.flood === 0 && S.floodTarget === 0) {
-        const f = S.locked; S.selected = f; S.floodC = [S.mouse.x, H - S.mouse.y]; S.floodIdx = f.i; S.floodTarget = 1;
+        const f = S.locked; S.selected = f; 
+        S.floodC = [S.mouse.x, H - S.mouse.y]; 
+        S.floodIdx = f.ci; S.floodTarget = 1;
         S.panel = opts.getPanel ? toStageRect(opts.getPanel()) : null;  
         unlock();
     }
@@ -213,7 +221,7 @@ const syncWalk = (v, sec) => {
     v.play().catch(() => {}).finally(() => { v._retry = false; });
   }
   const d = v.duration;
-  const target = sec % d; // 지금 있어야 할 위치
+  const target = (sec * WALK_RATE) % d;
   let diff = v.currentTime - target;
   if (diff > d / 2) diff -= d;
   if (diff < -d / 2) diff += d;
@@ -228,7 +236,8 @@ const frame = now => {
     if (!S.locked) S.base = (S.base + rate) % 1; // spatial freeze is global
     const zl = zoneEl ? zoneEl.offsetLeft : W * .37, zr = zoneEl ? zl + zoneEl.offsetWidth : W * .63;
     for (const f of figs) {
-    f.p = ((S.base - f.i / N) % 1 + 2) % 1; place(f); f.inZone = f.x > zl && f.x < zr;
+    f.p = ((S.base - f.i / WALKERS) % 1 + 2) % 1; place(f); 
+    f.inZone = f.x > zl && f.x < zr;
     }
     // interaction
     const busy = S.flood > 0 || S.floodTarget > 0;
@@ -282,7 +291,8 @@ const frame = now => {
     gl.useProgram(G.sim.p); gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fb); gl.viewport(0, 0, W, H);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src.t); gl.uniform1i(G.sim.u('uPrev'), 0);
     gl.uniform2f(G.sim.u('uRes'), W, H); gl.uniform2fv(G.sim.u('uA'), A); gl.uniform2fv(G.sim.u('uB'), B);
-    gl.uniform1f(G.sim.u('uPaint'), paint); gl.uniform1f(G.sim.u('uDecay'), dt / opts.healSeconds); gl.uniform1f(G.sim.u('uIdx'), S.locked ? S.locked.i : 0);
+    gl.uniform1f(G.sim.u('uPaint'), paint); gl.uniform1f(G.sim.u('uDecay'), dt / opts.healSeconds); 
+    gl.uniform1f(G.sim.u('uIdx'), S.locked ? S.locked.ci : 0)
     gl.uniform1f(G.sim.u('uTime'), S.t); gl.uniform1f(G.sim.u('uVel'), vel); gl.uniform1f(G.sim.u('uK'), S.k || 1); gl.uniform1i(G.sim.u('uMode'), mode);
     gl.drawArrays(gl.TRIANGLES, 0, 3); G.cur = 1 - G.cur;
     gl.useProgram(G.disp.p); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);

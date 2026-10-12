@@ -3,16 +3,17 @@ import HTMLFlipBook from 'react-pageflip';
 import { PAGES } from '../data/archive';
 import { panelRect } from '../lib/panel.js';
 import './Archive05.css';
+import { MagPage } from './MagLayouts';
 
 const FLIP_MS = 700;
 const LIFT = 0.3;
 
 const LAYERS = 8; // 종이 단면 겹 수 (= 최대 두께 px)
 
-const Page = forwardRef(function Page({ src, index }, ref) {
+const Page = forwardRef(function Page({ page, index, total }, ref) {
   return (
-    <div ref={ref} className="mag-page">
-      <img src={src} alt={`Archive ${index}쪽`} draggable={false} />
+    <div ref={ref} className="mag-page" data-i={index}>
+      <MagPage page={page} index={index} total={total} />
     </div>
   );
 });
@@ -26,6 +27,63 @@ function shiftFor(index, count) {
   if (index === 0) return -1;
   if (index >= count - 1) return 1;
   return 0;
+}
+// 이번 넘김에 표지나 뒤표지가 걸려 있는지 (a: 지금 쪽, b: 넘어갈 쪽, n: 전체 쪽수)
+const isEdge = (a, b, n) => a === 0 || b === 0 || a === n - 1 || b === n - 1;
+
+// 접힌 선 = 원래 구석(c)과 지금 잡고 있는 점(p)의 한가운데를 수직으로 지나는 선
+// 페이지 네모에서 그 선의 안쪽(제본선 쪽)만 남긴 다각형을 돌려줘
+function keepPolygon(w, h, c, p) {
+  const ax = 2 * (c.x - p.x);
+  const ay = 2 * (c.y - p.y);
+  const k = c.x * c.x + c.y * c.y - p.x * p.x - p.y * p.y;
+  const f = (q) => ax * q[0] + ay * q[1] - k; // 0보다 작으면 남길 쪽
+
+  const rect = [[0, 0], [w, 0], [w, h], [0, h]];
+  const out = [];
+  rect.forEach((a, i) => {
+    const b = rect[(i + 1) % 4];
+    const fa = f(a);
+    const fb = f(b);
+    if (fa < 0) out.push(a);
+    if (fa < 0 !== fb < 0) {
+      const t = fa / (fa - fb); // 변이 접힌 선과 만나는 지점
+      out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+    }
+  });
+  return out;
+}
+
+// 표지로 닫는 동안, 들려 올라가는 쪽(el)을 접힌 선을 따라 잘라내기
+function liftPage(flip, el, fromLeft) {
+  const ctrl = flip.getFlipController();
+  const r = flip.getRender().getRect();
+  const pw = r.width / 2;
+  const ox = fromLeft ? r.left : r.left + pw; // 이 쪽의 왼쪽 위 위치
+  const oy = r.top;
+  const fold = ctrl._origFold ?? (ctrl._origFold = ctrl.fold);
+  let c = null;
+
+  // curlFlip이 종이를 끌 때마다 부르는 fold를 잠깐 가로채기
+  ctrl.fold = function (pt) {
+    fold.call(this, pt);
+    if (!c) {
+      // 잡은 구석: 왼쪽 쪽이면 바깥 = 왼쪽 끝, 오른쪽 쪽이면 오른쪽 끝
+      c = { x: fromLeft ? 0 : pw, y: pt.y - oy < r.height / 2 ? 0 : r.height };
+    }
+    const p = { x: pt.x - ox, y: pt.y - oy };
+    if (Math.hypot(p.x - c.x, p.y - c.y) < 1) return; // 아직 안 움직였으면 그대로
+
+    const poly = keepPolygon(pw, r.height, c, p);
+    el.style.clipPath = poly.length
+      ? `polygon(${poly.map(([x, y]) => `${x}px ${y}px`).join(', ')})`
+      : 'polygon(0 0, 0 0, 0 0)';
+  };
+
+  return () => {
+    ctrl.fold = fold;
+    el.style.clipPath = '';
+  };
 }
 
 // t: 0~1 (그쪽에 쌓인 종이 비율), side: 'left' | 'right'
@@ -92,20 +150,52 @@ export default function Archive05() {
   const pageH = Math.round(panel.height); // 팝업 높이 그대로
 
   const bookRef = useRef(null);
+  const magRef = useRef(null);
+  const liftRef = useRef(null);
+
+  // 표지 넘김용으로 붙였던 것들 전부 원래대로
+  const endLift = () => {
+    const mag = magRef.current;
+    mag?.classList.remove('is-edge');
+    mag?.querySelectorAll('.is-leaving').forEach((el) => el.classList.remove('is-leaving'));
+    mag?.querySelectorAll('.mp').forEach((el) => {
+      el.style.clipPath = '';
+    });
+    liftRef.current?.();
+    liftRef.current = null;
+  };
   const pageRef = useRef(0); // 지금 보는 페이지
   const [shift, setShift] = useState(-1);
   const [idx, setIdx] = useState(pageRef.current);
   const curlRaf = useRef(0);
   useEffect(() => () => cancelAnimationFrame(curlRaf.current), []);
 
-  // 넘기기 공통 함수 (클릭·키보드 둘 다 이걸 씀)
+  // 넘기기 공통 함수 (클릭, 키보드 둘 다 이걸 씀)
   const turn = (dir, corner) => {
+    const fb = bookRef.current?.pageFlip();
+    if (!fb || fb.getState() !== 'read') return; // 넘기는 중에 또 누르면 무시
+    endLift(); // 남은 게 있으면 정리하고 시작
     const flip = bookRef.current?.pageFlip();
     if (!flip) return;
     const cur = flip.getCurrentPageIndex();
     if (curlFlip(flip, dir, corner, curlRaf)) {
       const count = flip.getPageCount();
       const next = nextIndex(cur, dir, count);
+      // 넘기기 직전마다 soft로 맞추기
+      const pc = flip.getPageCount();
+      flip.getPage(0).setDensity('soft');
+      flip.getPage(pc - 1).setDensity('soft');
+      magRef.current?.classList.toggle('is-edge', isEdge(pageRef.current, next, count));
+      // 표지로 닫을 때 들려 올라가는 쪽: 앞표지면 1쪽, 뒤표지면 마지막 바로 앞 쪽
+      const leaveIdx = next === 0 ? 1 : next === pc - 1 ? pc - 2 : -1;
+      const leaveEl = magRef.current?.querySelector(`.mag-page[data-i="${leaveIdx}"]`);
+      if (leaveEl) {
+        leaveEl.classList.add('is-leaving');
+        liftRef.current = liftPage(flip, leaveEl.querySelector('.mp'), dir < 0);
+      }
+      magRef.current
+        ?.querySelector(`.mag-page[data-i="${leaveIdx}"]`)
+        ?.classList.add('is-leaving');
       setShift(shiftFor(next, count));
       setIdx(next);
     }
@@ -118,7 +208,7 @@ export default function Archive05() {
     turn(dir, corner);
   };
 
-  // ② 키보드 화살표
+  // 2. 키보드 화살표
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'ArrowRight') turn(1, 'bottom');
@@ -158,9 +248,11 @@ export default function Archive05() {
   return (
     <main className="archive">
       <div
+        ref={magRef}
         className="mag"
         onClick={onClick}
         style={{
+          '--u': `${pageW / 100}px`,
           transform: `translateX(${(shift * pageW) / 2}px)`,
           transition: `transform ${FLIP_MS}ms cubic-bezier(0.45, 0, 0.55, 1)`,
         }}
@@ -192,36 +284,26 @@ export default function Archive05() {
             f.getPage(f.getPageCount() - 1).setDensity('soft');
           }}
           onFlip={(e) => {
+            endLift();
             pageRef.current = e.data;
             const count = bookRef.current.pageFlip().getPageCount();
             setShift(shiftFor(e.data, count));
             setIdx(e.data);
           }}
+          onChangeState={(e) => {
+            if (e.data !== 'read') return;
+            const mag = magRef.current;
+            mag?.classList.remove('is-edge');
+            mag?.querySelectorAll('.is-leaving').forEach((el) => el.classList.remove('is-leaving'));
+            liftRef.current?.();   // fold 원래대로, 잘라낸 것 풀기
+            liftRef.current = null;
+          }}
         >
-          {PAGES.map((src, i) => (
-            <Page key={i} src={src} index={i} />
+          {PAGES.map((p, i) => (
+            <Page key={i} page={p} index={i} total={PAGES.length} />
           ))}
         </HTMLFlipBook>
       </div>
     </main>
   );
 }
-
-/*
-src
- - components
-   Home00.jsx
-   Album01.jsx
-   Project02.jsx
-   Location03.jsx
-   Lookbook04.jsx
-   Archive05.jsx
-   Stage.css
-   Stage.jsx
-   LeatherBg.jsx
- - lib
-   stage23.js
- App.jsx
- index.css
- main.jsx
-*/
