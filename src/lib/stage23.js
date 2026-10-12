@@ -1,18 +1,20 @@
 /* 23 GRAMS — homepage engine. window.Stage23.mount(stageEl, {mode, loopSeconds, healSeconds, debug})
 Swap assets in CHARS: video = transparent walk-cycle (webm/hevc), texture = leather image (future). */
-const W = 1280, H = 720, N = 5, BASE_H = 432, BASE_W = 96;
+const W = 1280, H = 720, N = 5, BASE_H = 432, BASE_W = 180;
 const LINE = 0.5;
 const UP = 0.5;
 const CHARS = [
-  { id: '01', href: '/album', body: '#780000', video: null, leather: { type: 0, color: [.03, .03, .034], gloss: 1.0, bump: 30 } },
-  { id: '02', href: '/project', body: '#939100', video: null, leather: { type: 1, color: [.27, .035, .04], gloss: .35, bump: 2.5 } },
-  { id: '03', href: '/location', noFlood: true, body: '#009552', video: null, leather: { type: 2, color: [.13, .085, .06], gloss: .5, bump: 5 } },
-  { id: '04', href: '/lookbook', body: '#00458a', video: null, leather: { type: 3, color: [.095, .1, .105], gloss: .6, bump: 4 } },
-  { id: '05', href: '/archive', noFlood: true, body: '#8d008f', video: null, leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
+  { id: '01', href: '/album', body: '#780000', video: 'public/walkers/album_walker.webm', leather: { type: 0, color: [.03, .03, .034], gloss: 1.0, bump: 30 } },
+  { id: '02', href: '/project', body: '#939100', video: 'public/walkers/album_walker.webm', leather: { type: 1, color: [.27, .035, .04], gloss: .35, bump: 2.5 } },
+  { id: '03', href: '/location', noFlood: true, body: '#009552', video: 'public/walkers/album_walker.webm', leather: { type: 2, color: [.13, .085, .06], gloss: .5, bump: 5 } },
+  { id: '04', href: '/lookbook', body: '#00458a', video: 'public/walkers/album_walker.webm', leather: { type: 3, color: [.095, .1, .105], gloss: .6, bump: 4 } },
+  { id: '05', href: '/archive', noFlood: true, body: '#8d008f', video: 'public/walkers/album_walker.webm', leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
 ];
 const MIN_S = 0.1; // 왼쪽 끝 크기 (작을수록 멀어 보임)
-const MAX_S = 1.8; // 오른쪽 끝 크기 (1.65를 넘으면 위아래가 살짝 잘림)
-const PERSP = 1.2; // 원근 가속 정도 (0~1, 클수록 오른쪽에서 확 다가옴)
+const MAX_S = 2.95; // 오른쪽 끝 크기 (1.65를 넘으면 위아래가 살짝 잘림)
+const PERSP = 1.0; // 원근 가속 정도 (0~1, 클수록 오른쪽에서 확 다가옴)
+const GROW = 1.3; // 클수록 왼쪽은 작게 유지되고 오른쪽에서 확 커짐 (1 = 지금처럼 일정하게)
+const SPREAD = 1.3; // 클수록 사람 사이 간격이 넓어짐 (1 = 지금)
 
 const MODES = { pigment: 0, tear: 1, peel: 2 };
 // 페이지가 바뀌어도 마지막 마우스 위치를 기억
@@ -199,7 +201,9 @@ const place = f => {
     const p = f.p, z = 2.2 + (0.9 - 2.2) * p, s = 1 / z;
     const pe = (s - 1 / 2.2) / (1 / 0.9 - 1 / 2.2);
     const e = (1 - PERSP) * p + PERSP * pe;
-    f.e = e; f.x = -14 + (W + 76) * e; f.s = MIN_S + (MAX_S - MIN_S) * e;
+    f.e = e;
+    f.x = -14 + (W + 76) * SPREAD * e;
+    f.s = MIN_S + (MAX_S - MIN_S) * Math.pow(e, GROW);
     f.y = LINE * H + BASE_H * f.s * UP;
 };
 const inBox = (f, m, pad) => m.x > f.x - BASE_W / 2 * f.s - pad && m.x < f.x + BASE_W / 2 * f.s + pad && m.y > f.y - BASE_H * f.s - pad && m.y < f.y;
