@@ -49,19 +49,3 @@
   white-space: nowrap;
   transform-origin: 0 0;
 }
-
-.album-debug {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.album-debug span {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border: 1px solid #ff3b3b;
-  border-radius: 50%;
-}

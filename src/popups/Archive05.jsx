@@ -40,7 +40,8 @@ function stackShadow(t, side) {
   return out.join(', ');
 }
 
-function curlFlip(flip, dir, corner) {
+// rafRef: 팝업이 닫힐 때 넘기는 애니메이션을 멈추려고 받아둠
+function curlFlip(flip, dir, corner, rafRef) {
   if (flip.getState() !== 'read') return false;
 
   const cur = flip.getCurrentPageIndex();
@@ -64,10 +65,10 @@ function curlFlip(flip, dir, corner) {
       x: xs + (xe - xs) * e,
       y: y0 + lift * Math.sin(Math.PI * e),
     });
-    if (t < 1) requestAnimationFrame(step);
+    if (t < 1) rafRef.current = requestAnimationFrame(step);
     else ctrl.stopMove();
   };
-  requestAnimationFrame(step);
+  rafRef.current = requestAnimationFrame(step);
   return true;
 }
 
@@ -94,15 +95,19 @@ export default function Archive05() {
   const pageRef = useRef(0); // 지금 보는 페이지
   const [shift, setShift] = useState(-1);
   const [idx, setIdx] = useState(pageRef.current);
+  const curlRaf = useRef(0);
+  useEffect(() => () => cancelAnimationFrame(curlRaf.current), []);
 
   // 넘기기 공통 함수 (클릭·키보드 둘 다 이걸 씀)
   const turn = (dir, corner) => {
     const flip = bookRef.current?.pageFlip();
     if (!flip) return;
     const cur = flip.getCurrentPageIndex();
-    if (curlFlip(flip, dir, corner)) {
+    if (curlFlip(flip, dir, corner, curlRaf)) {
       const count = flip.getPageCount();
-      setShift(shiftFor(nextIndex(cur, dir, count), count));
+      const next = nextIndex(cur, dir, count);
+      setShift(shiftFor(next, count));
+      setIdx(next);
     }
   };
 
@@ -162,11 +167,11 @@ export default function Archive05() {
       >
       <div
         className="mag-stack"
-        style={{ left: 0, width: pageW, height: pageH, boxShadow: stackShadow(leftT, 'left') }}
+        style={{ left: 0, width: pageW, height: pageH, boxShadow: stackShadow(leftT, 'left'), transition: stackTransition(leftAppear) }}
       />
       <div
         className="mag-stack"
-        style={{ left: pageW, width: pageW, height: pageH, boxShadow: stackShadow(rightT, 'right') }}
+        style={{ left: pageW, width: pageW, height: pageH, boxShadow: stackShadow(rightT, 'right'), transition: stackTransition(rightAppear) }}
       />
         <HTMLFlipBook
           key={`${pageW}x${pageH}`}
@@ -190,6 +195,7 @@ export default function Archive05() {
             pageRef.current = e.data;
             const count = bookRef.current.pageFlip().getPageCount();
             setShift(shiftFor(e.data, count));
+            setIdx(e.data);
           }}
         >
           {PAGES.map((src, i) => (

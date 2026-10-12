@@ -212,7 +212,7 @@ function Item({ o, i, progress, onHover }) {
   const ref = useRef();
   useFrame((_, dt) => {
     const t = i - progress.current.value;
-    itemPosition(o, i, progress.current.value, ref.current.position); // ← 이 줄로 교체
+    itemPosition(o, i, progress.current.value, ref.current.position);
     ref.current.rotation.y += dt * 0.15;
     ref.current.visible = t > -1.2;
   });
@@ -234,7 +234,6 @@ function Item({ o, i, progress, onHover }) {
 export default function Album01() {
   const progress = useRef({ target: 0, value: 0 });
   const lyricsRef = useRef(null);
-  const debugRef = useRef(null);
   const touchY = useRef(null);
   const [hovered, setHovered] = useState(null);
   const lastShown = useRef(null);
@@ -262,7 +261,7 @@ export default function Album01() {
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 5, 6]} intensity={2} />
         <ScrollDamper progress={progress} />
-        <LyricsMover progress={progress} lyricsRef={lyricsRef} debugRef={debugRef} />
+        <LyricsMover progress={progress} lyricsRef={lyricsRef} />
         <Suspense fallback={null}>
           {OBJECTS.map((o, i) => (
             <Item key={o.id} o={o} i={i} progress={progress} onHover={setHovered} />
@@ -274,10 +273,6 @@ export default function Album01() {
         {LYRICS.map((l, i) => (
           <p key={i}>{l.text || '\u00A0'}</p>
         ))}
-      </div>
-
-      <div className="album-debug" ref={debugRef}>
-        {OBJECTS.map((o) => <span key={o.id} />)}
       </div>
 
       <p className={`album-label ${hovered ? 'is-on' : ''}`}>

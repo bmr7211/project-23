@@ -1,5 +1,5 @@
-/* 23 GRAMS — homepage engine. window.Stage23.mount(stageEl, {mode, loopSeconds, healSeconds, debug})
-Swap assets in CHARS: video = transparent walk-cycle (webm/hevc), texture = leather image (future). */
+/* 23 GRAMS — 홈 런웨이 엔진. mount(stageEl, {mode, loopSeconds, healSeconds, debug, paused, getPanel, onSelect})
+CHARS: video = 투명 배경 걷는 영상(webm), photo = flood에 쓰는 가죽 사진. */
 const W = 1280, H = 720, N = 5, BASE_H = 432, BASE_W = 180;
 const LINE = 0.5;
 const UP = 0.5;
@@ -10,16 +10,13 @@ const CHARS = [
   { id: '04', href: '/lookbook', photo: '/leathers/leather.jpg', body: '#00458a', video: '/walkers/album_walker.webm', leather: { type: 3, color: [.095, .1, .105], gloss: .6, bump: 4 } },
   { id: '05', href: '/archive', photo: '/leathers/leather.jpg', noFlood: true, body: '#8d008f', video: '/walkers/album_walker.webm', leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
 ];
-const MIN_S = 0.1; // 왼쪽 끝 크기 (작을수록 멀어 보임)
-const MAX_S = 2.95; // 오른쪽 끝 크기 (1.65를 넘으면 위아래가 살짝 잘림)
+const MIN_S = 0.2; // 왼쪽 끝 크기 (작을수록 멀어 보임)
+const MAX_S = 2.5; // 오른쪽 끝 크기 (1.65를 넘으면 위아래가 살짝 잘림)
 const PERSP = 1.0; // 원근 가속 정도 (0~1, 클수록 오른쪽에서 확 다가옴)
-const GROW = 1.3; // 클수록 왼쪽은 작게 유지되고 오른쪽에서 확 커짐 (1 = 지금처럼 일정하게)
-const SPREAD = 1.3; // 클수록 사람 사이 간격이 넓어짐 (1 = 지금)
+const GROW = 1.3; // 클수록 왼쪽은 작게 유지되고 오른쪽에서 확 커짐
+const SPREAD = 1.1; // 클수록 사람 사이 간격이 넓어짐
 
 const MODES = { pigment: 0, tear: 1, peel: 2 };
-// 페이지가 바뀌어도 마지막 마우스 위치를 기억
-const lastPointer = { x: innerWidth / 2, y: innerHeight * 0.3 };
-window.addEventListener('pointermove', e => { lastPointer.x = e.clientX; lastPointer.y = e.clientY; });
 
 const VS = `#version 300 es
 in vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
@@ -59,17 +56,9 @@ if(s>.05)g=uIdx/4.;}
 r=min(max(r-uDecay,0.),1.1);o=vec4(r,g,0.,1.);
 }`;
 const DISP = `#version 300 es
-precision highp float;uniform sampler2D uMask,uAtlas;uniform vec2 uRes,uMouse,uFloodC;uniform int uMode;uniform float uTime,uFlood,uFloodIdx;uniform float uGloss[5];uniform float uBump[5];uniform vec4 uArea,uPanel;out vec4 o;
+precision highp float;uniform sampler2D uMask,uAtlas;uniform vec2 uRes,uMouse,uFloodC;uniform int uMode;uniform float uTime,uFlood,uFloodIdx;uniform vec4 uArea,uPanel;out vec4 o;
 ${COMMON}
 vec4 lt(vec2 uv,float idx){return texture(uAtlas,vec2(uv.x,(clamp(uv.y,.002,.998)+idx)/5.));}
-vec3 leather(vec2 uv,float idx,vec2 px){
-int ii=int(idx);vec4 c=lt(uv,idx);vec2 e=2./uRes;
-float hx=lt(uv+vec2(e.x,0.),idx).a-lt(uv-vec2(e.x,0.),idx).a;float hy=lt(uv+vec2(0.,e.y),idx).a-lt(uv-vec2(0.,e.y),idx).a;
-float b=uBump[ii];vec3 N=normalize(vec3(-hx*b,-hy*b,1.));vec3 L=normalize(vec3(uMouse-px,320.));vec3 Hh=normalize(L+vec3(0,0,1));float g=uGloss[ii];
-float dif=max(dot(N,L),0.);float sp=pow(max(dot(N,Hh),0.),mix(14.,120.,g))*mix(.18,1.3,g);
-float sb=smoothstep(.3,0.,abs(N.x*3.+(uv.x-.5)*1.4-.35))*g*g*.28;
-return c.rgb*(.45+.8*dif)*(.55+.45*c.a)+vec3(sp+sb);
-}
 float mk(vec2 uv){return texture(uMask,uv).r;}
 void main(){
 vec2 px=gl_FragCoord.xy,uv=px/uRes,e=1./uRes;vec4 m=texture(uMask,uv);float f=m.r;float idx=floor(m.g*4.+.5);
@@ -116,32 +105,18 @@ const zoneEl = root.querySelector('[data-zone]');
 const made = [];
 const mk = (tag, css, parent) => { const e = document.createElement(tag); e.style.cssText = css; (parent || root).appendChild(e); if (!parent) made.push(e); return e; };
 
-const zoneGlow = zoneEl ? mk('div', 'position:absolute;inset:0;background:transparent;opacity:0;pointer-events:none', zoneEl) : null;
 const canvas = mk('canvas', 'position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none');
 canvas.width = W; canvas.height = H;
 const figLayer = mk('div', 'position:absolute;inset:0;z-index:2;pointer-events:none;transition:opacity .6s;filter:drop-shadow(0 0 .8px rgba(255,255,255,.6))');
 const dbgLayer = mk('div', 'position:absolute;inset:0;z-index:4;pointer-events:none;display:none');
-const page = mk('div', "position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;justify-content:space-between;padding:28px 32px;color:#f2efea;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;opacity:0;pointer-events:none;transition:opacity .7s");
-page.innerHTML = `<div style="display:flex;justify-content:space-between;font-weight:500;font-size:13px;letter-spacing:.18em"><span>23 GRAMS</span><span data-p-id></span></div>
-<div data-p-big style="font-weight:300;font-size:260px;line-height:.8;letter-spacing:-.05em"></div>
-<div style="display:flex;justify-content:space-between;align-items:flex-end;font:11px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.08em"><button data-p-back style="all:unset;cursor:pointer;color:#f2efea;padding:10px 0">← RETURN</button><span data-p-href style="opacity:.7"></span></div>`;
-const pId = page.querySelector('[data-p-id]'), pBig = page.querySelector('[data-p-big]'), pHref = page.querySelector('[data-p-href]');
 
 const figs = CHARS.map((c, i) => {
     const el = mk('div', `position:absolute;left:0;top:0;width:${BASE_W}px;height:${BASE_H}px;transform-origin:50% 100%;will-change:transform,opacity`, figLayer);
-    const f = { c, i, el, lag: 0, locked: false, p: 0, x: 0, y: 0, s: 1, legs: null, inner: null };
+    const f = { c, i, el, lag: 0, locked: false, p: 0, x: 0, y: 0, s: 1 };
     if (c.video) {
     const v = document.createElement('video'); Object.assign(v, { src: c.video, muted: true, loop: true, autoplay: true, playsInline: true });
     f.v = v;
     v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%'; el.appendChild(v);
-    } else {
-    const inner = mk('div', 'position:absolute;inset:0', el);
-    mk('div', `position:absolute;left:28px;top:0;width:40px;height:40px;border-radius:50%;background:${c.body}`, inner);
-    const torso = mk('div', `position:absolute;left:0;top:46px;width:96px;height:236px;border-radius:36px 36px 10px 10px;background:${c.body};display:flex;align-items:center;justify-content:center`, inner);
-    torso.innerHTML = `<span style="writing-mode:vertical-rl;font:9px/1 ui-monospace,Menlo,monospace;letter-spacing:.12em;color:rgba(255,255,255,.32)">23—${c.id} · walk_${c.id}.webm</span>`;
-    const l1 = mk('div', `position:absolute;left:13px;top:272px;width:32px;height:160px;border-radius:12px;background:${c.body};transform-origin:50% 0`, inner);
-    const l2 = mk('div', `position:absolute;left:51px;top:272px;width:32px;height:160px;border-radius:12px;background:${c.body};transform-origin:50% 0`, inner);
-    f.inner = inner; f.legs = [l1, l2];
     }
     f.dbgBox = mk('div', 'position:absolute;border:1px dashed rgba(200,0,0,.6)', dbgLayer);
     f.dbgArea = mk('div', 'position:absolute;border:1px dashed rgba(0,90,200,.6);border-radius:50%', dbgLayer);
@@ -191,7 +166,7 @@ if (gl) {
 
 // ---- state
 const S = { base: 0.9, /* p = .9,.7,.5,.3,.1 → all five on screen at load */ mouse: { x: -999, y: -999, in: false }, last: null, locked: null, activeUntil: 0, cleared: true,
-    flood: 0, floodTarget: 0, floodC: [0, 0], floodIdx: 0, pageOpen: false, glow: 0, t: 0 };
+    flood: 0, floodTarget: 0, floodC: [0, 0], floodIdx: 0, pageOpen: false, t: 0 };
 const toStage = e => { const r = root.getBoundingClientRect(), k = r.width / W; return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / (r.height / H) }; };
 const toStageRect = v => {
   const r = root.getBoundingClientRect(), kx = r.width / W, ky = r.height / H;
@@ -200,12 +175,10 @@ const toStageRect = v => {
 };
 const onMove = e => { const p = toStage(e); S.mouse.x = p.x; S.mouse.y = p.y; S.mouse.in = true; };
 const onLeave = () => { S.mouse.in = false; };
-const onClick = e => {
-    if (e.target.closest('[data-p-back]')) { S.floodTarget = 0; S.pageOpen = false; page.style.opacity = 0; page.style.pointerEvents = 'none'; return; }
+const onClick = () => {
     if (S.locked && S.flood === 0 && S.floodTarget === 0) {
         const f = S.locked; S.selected = f; S.floodC = [S.mouse.x, H - S.mouse.y]; S.floodIdx = f.i; S.floodTarget = 1;
         S.panel = opts.getPanel ? toStageRect(opts.getPanel()) : null;  
-        pId.textContent = '23—' + f.c.id; pBig.textContent = f.c.id; pHref.textContent = f.c.href + '  ·  PAGE IN DEVELOPMENT';
         unlock();
     }
 };
@@ -213,9 +186,7 @@ root.addEventListener('mousemove', onMove); root.addEventListener('mouseleave', 
 const unlock = () => { if (S.locked) { S.locked.locked = false; S.locked = null; S.last = null; S.light = null; root.style.cursor = ''; } };
 const closePage = () => {
   S.floodTarget = 0; S.pageOpen = false;
-  page.style.opacity = 0; page.style.pointerEvents = 'none';
 };
-let first = true;
 
 const place = f => {
     const p = f.p, z = 2.2 + (0.9 - 2.2) * p, s = 1 / z;
@@ -232,7 +203,6 @@ const area = f => ({ cx: f.x, cy: f.y - BASE_H / 2 * f.s, rx: BASE_W / 2 * f.s *
 const mapIn = m => ({ x: m.x, y: m.y }); // effect stays inside the input area (clipped in shader)
 const inAreaA = (a, m) => Math.abs(m.x - a.cx) < a.rx && Math.abs(m.y - a.cy) < a.ry;
 const zoneArea = () => { const l = zoneEl ? zoneEl.offsetLeft : W * .37, t = zoneEl ? zoneEl.offsetTop : H * .08, w = zoneEl ? zoneEl.offsetWidth : W * .26, h = zoneEl ? zoneEl.offsetHeight : H * .84; return { cx: l + w / 2, cy: t + h / 2, rx: w / 2, ry: h / 2 }; };
-const inArea = (f, m) => { const a = area(f); const dx = (m.x - a.cx) / a.rx, dy = (m.y - a.cy) / a.ry; return dx * dx + dy * dy < 1; };
 
 // 모든 인물 영상을 같은 시계에 맞추기
 const SYNC_TOL = 0.1;
@@ -257,9 +227,8 @@ const frame = now => {
     const L = opts.loopSeconds, rate = dt / L;
     if (!S.locked) S.base = (S.base + rate) % 1; // spatial freeze is global
     const zl = zoneEl ? zoneEl.offsetLeft : W * .37, zr = zoneEl ? zl + zoneEl.offsetWidth : W * .63;
-    let anyIn = false;
     for (const f of figs) {
-    f.p = ((S.base - f.i / N) % 1 + 2) % 1; place(f); f.inZone = f.x > zl && f.x < zr; anyIn = anyIn || f.inZone;
+    f.p = ((S.base - f.i / N) % 1 + 2) % 1; place(f); f.inZone = f.x > zl && f.x < zr;
     }
     // interaction
     const busy = S.flood > 0 || S.floodTarget > 0;
@@ -270,20 +239,14 @@ const frame = now => {
     }
     // figures
     for (const f of figs) {
-    /*const ph = S.t * 5.6 + f.i * 1.3;*/
     f.el.style.transform = `translate(${f.x - BASE_W / 2}px,${f.y - BASE_H}px) scale(${f.s})`;
     f.el.style.zIndex = Math.floor(f.p * 1000);
     if (f.v) syncWalk(f.v, now / 1000);
-    /*if (f.inner) { f.inner.style.transform = `translateY(${-Math.abs(Math.sin(ph)) * 7}px)`; 
-    f.legs[0].style.transform = `rotate(${Math.sin(ph) * 7}deg)`; 
-    f.legs[1].style.transform = `rotate(${-Math.sin(ph) * 7}deg)`; }*/
     if (opts.debug) { const a = area(f);
         Object.assign(f.dbgBox.style, { left: f.x - BASE_W / 2 * f.s + 'px', top: f.y - BASE_H * f.s + 'px', width: BASE_W * f.s + 'px', height: BASE_H * f.s + 'px', opacity: f.inZone ? 1 : .25 });
         Object.assign(f.dbgArea.style, { left: a.cx - a.rx + 'px', top: a.cy - a.ry + 'px', width: a.rx * 2 + 'px', height: a.ry * 2 + 'px', opacity: f.locked ? 1 : f.inZone ? .5 : 0 }); }
     }
     dbgLayer.style.display = opts.debug ? 'block' : 'none';
-    S.glow += ((anyIn ? 1 : 0) + (S.locked ? 0.8 : 0) - S.glow) * Math.min(1, dt * 3);
-    if (zoneGlow) zoneGlow.style.opacity = S.glow.toFixed(3);
     // flood
     if (S.floodTarget === 1 && !S.pageOpen && S.selected?.c?.noFlood) {
       S.floodTarget = 0;
@@ -296,7 +259,6 @@ const frame = now => {
     S.flood = S.floodTarget > S.flood ? Math.min(1, S.flood + dt / 1.5) : Math.max(0, S.flood - dt / 0.4);
     if (S.flood === 1 && !S.pageOpen) { S.pageOpen = true;
         if (opts.onSelect) opts.onSelect(S.selected.c);
-        else { page.style.opacity = 1; page.style.pointerEvents = 'auto'; }
     }
     }
     const closing = S.floodTarget < S.flood;
@@ -331,7 +293,6 @@ const frame = now => {
     const ar = S.area || { cx: -9999, cy: -9999, rx: 1, ry: 1 }; gl.uniform4f(G.disp.u('uArea'), ar.cx, H - ar.cy, ar.rx, ar.ry);
     const pr = S.panel;
     gl.uniform4f(G.disp.u('uPanel'), pr ? pr.cx : 0, pr ? H - pr.cy : 0, pr ? pr.hw : 0, pr ? pr.hh : 0);
-    gl.uniform1fv(G.disp.u('uGloss'), CHARS.map(c => c.leather.gloss)); gl.uniform1fv(G.disp.u('uBump'), CHARS.map(c => c.leather.bump));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 };
 raf = requestAnimationFrame(frame);
@@ -345,79 +306,8 @@ return {
     else closePage();
   },
   destroy() { cancelAnimationFrame(raf); root.removeEventListener('mousemove', onMove); root.removeEventListener('mouseleave', onLeave); root.removeEventListener('click', onClick);
-  made.forEach(e => e.remove()); zoneGlow && zoneGlow.remove(); gl && gl.getExtension('WEBGL_lose_context')?.loseContext(); },
+  made.forEach(e => e.remove()); gl && gl.getExtension('WEBGL_lose_context')?.loseContext(); },
 };
 }
 
-function mountLeather(root, opts = {}) {
-  const idx = opts.index ?? 0;
-  const canvas = document.createElement('canvas');
-  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .3s';
-  root.appendChild(canvas);
-  const gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: false });
-  if (!gl) { root.style.background = CHARS[idx].body; return { destroy() { canvas.remove(); } }; }
-
-  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(o)); return o; };
-  const prog = fs => { const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs)); gl.bindAttribLocation(p, 0, 'p'); gl.linkProgram(p); const u = {}; return { p, u: n => u[n] ?? (u[n] = gl.getUniformLocation(p, n)) }; };
-  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  const tex = (w, h) => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
-    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); return { t, fb }; };
-  const bake = prog(BAKE), disp = prog(DISP);
-  const c = CHARS[idx];
-  let w = 0, h = 0, k = 1, atlas = null, mask = null, raf = 0, queued = false;
-  const mouse = { x: lastPointer.x, y: lastPointer.y };   // 홈에서의 마지막 마우스 위치로 시작
-
-  const setup = () => {
-    const r = root.getBoundingClientRect();
-    const cw = Math.max(1, root.clientWidth), ch = Math.max(1, root.clientHeight);
-    k = Math.max(innerWidth / W, innerHeight / H);
-    w = Math.round(cw / k); h = Math.round(ch / k);
-    const sx = (innerWidth / k - W) / 2, sy = (innerHeight / k - H) / 2;
-    const ox = sx - r.left / k;
-    const oy = sy - (innerHeight - r.bottom) / k;
-    canvas.width = w; canvas.height = h;
-    for (const o of [atlas, mask]) if (o) { gl.deleteTexture(o.t); gl.deleteFramebuffer(o.fb); }
-    atlas = tex(w, h * N); mask = tex(w, h);
-    gl.useProgram(bake.p); gl.bindFramebuffer(gl.FRAMEBUFFER, atlas.fb); gl.viewport(0, idx * h, w, h);
-    gl.uniform2f(bake.u('uRes'), W, H);
-    gl.uniform2f(bake.u('uOff'), ox, idx * h + oy);
-    gl.uniform1i(bake.u('uType'), c.leather.type); gl.uniform3fv(bake.u('uColor'), c.leather.color); gl.uniform1f(bake.u('uSeed'), idx * 3.7);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-  };
-
-  const render = () => {
-    queued = false;
-    const r = root.getBoundingClientRect();
-    gl.useProgram(disp.p); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, w, h);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, mask.t); gl.uniform1i(disp.u('uMask'), 0);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, atlas.t); gl.uniform1i(disp.u('uAtlas'), 1);
-    gl.uniform2f(disp.u('uRes'), w, h);
-    gl.uniform2f(disp.u('uMouse'), (mouse.x - r.left) / k, h - (mouse.y - r.top) / k);   // 무대 좌표로 환산
-    gl.uniform1i(disp.u('uMode'), 0); gl.uniform1f(disp.u('uTime'), 0);
-    gl.uniform1f(disp.u('uFlood'), 1); gl.uniform2f(disp.u('uFloodC'), w / 2, h / 2); gl.uniform1f(disp.u('uFloodIdx'), idx);
-    gl.uniform4f(disp.u('uArea'), -9999, -9999, 1, 1);
-    gl.uniform1fv(disp.u('uGloss'), CHARS.map(q => q.leather.gloss)); gl.uniform1fv(disp.u('uBump'), CHARS.map(q => q.leather.bump));
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-  };
-  const draw = () => { if (!queued) { queued = true; raf = requestAnimationFrame(render); } };
-
-  const onResize = () => { setup(); draw(); };
-  window.addEventListener('resize', onResize);
-  setup(); render();
-  requestAnimationFrame(() => { canvas.style.opacity = 1; });
-
-  return {
-    destroy() {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', onResize);
-      gl.getExtension('WEBGL_lose_context')?.loseContext(); canvas.remove();
-    },
-  };
-}
-
-export {mount, mountLeather, CHARS};
+export { mount };

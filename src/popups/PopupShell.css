@@ -6,8 +6,6 @@
     align-items: center;
     justify-content: center;
     background: transparent;
-    /*background: center;*/
-    /*animation: popup-fade 0.15s ease-out;*/
 }
 
 .popup-panel {
@@ -48,10 +46,6 @@
   pointer-events: none;
 }
 
-.popup-panel.is-bare .popup-content {
-  height: 100%;
-}
-
 .popup-panel.is-bare .popup-close {
   pointer-events: auto;
 }
@@ -59,11 +53,6 @@
 @keyframes popup-fade {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-
-@keyframes popup-rise {
-  from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to   { opacity: 1; transform: none; }
 }
 
 @keyframes popup-dim {

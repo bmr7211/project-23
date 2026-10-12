@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom';
-import LeatherBg from '../components/LeatherBg.jsx';
 
 export default function Project02() {
   return (
     <>
-    <LeatherBg index={1} />
     <main style={{ /*minHeight: '100vh', background: '#0c0c0d',*/ 
                 height: '100%', color: '#f2efea', 
                 padding: '28px 32px', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
