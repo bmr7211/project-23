@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { locations } from "../data/locations";
 import "./Location03.css";
+import Dive from './Dive';
 
 const FLIGHT_TIME = 1200; // 비행 시간 (ms)
 const TRAIL_LIFE = 400; // 선이 사라지는 시간 (ms)
@@ -19,6 +20,8 @@ export default function Location03() {
   const angleRef = useRef(-135);
   const busyRef = useRef(false);
   const rafRef = useRef(0);
+  const earthRef = useRef(null);
+  const [dive, setDive] = useState(null);
 
   // 위치 id --> 팝업 기준 px 좌표
   const getXY = (id) => {
@@ -120,7 +123,7 @@ export default function Location03() {
         if (raw === 1) {
           arrived = true;
           currentRef.current = loc.id;
-          setActive(loc);
+          setDive({ ...loc, x: p2.x, y: p2.y, dir: "in" });  // setActive(loc) 대신
         }
       }
 
@@ -137,12 +140,50 @@ export default function Location03() {
     rafRef.current = requestAnimationFrame(frame);
   };
 
+  const back = () => {
+    setActive(null);
+    setDive((d) => ({ ...d, dir: "out" }));
+  };
+
   return (
-    <div className="location" ref={rootRef}>
-      <div className="earth">
+    <div className={`location ${dive ? "is-diving" : ""}`} ref={rootRef}>
+      <div className="earth" ref={earthRef}>
         <img className="earth-img" src="/locations/earth.jpg" alt="Earth" />
-        {active && (
-          <div className="card" key={active.id}>
+        {locations.map((loc) => (
+          <button
+            key={loc.id}
+            ref={(el) => (pointRefs.current[loc.id] = el)}
+            className="earth-point"
+            style={{ left: `${loc.point.x}%`, top: `${loc.point.y}%` }}
+            onClick={() => fly(loc)}
+            aria-label={loc.label}
+          >
+            <span className="earth-point-dot" />
+            <span className="earth-point-label">{loc.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <canvas ref={canvasRef} className="flight-canvas" />
+      <img ref={planeRef} className="plane" src="/locations/usagi.svg" alt="" />
+
+      {dive && (
+        <Dive
+          key={`dive-${dive.id}-${dive.dir}`}
+          x={dive.x}
+          y={dive.y}
+          earthOrigin={`${dive.point.x}% ${dive.point.y}%`}
+          photo={dive.photo}
+          earthRef={earthRef}
+          dir={dive.dir}
+          onDone={() => (dive.dir === "in" ? setActive(dive) : setDive(null))}
+        />
+      )}
+
+      {active && (
+        <>
+          <button className="loc-back" onClick={back}>Back to EARTH</button>
+          <div className="card" key={`card-${active.id}`}>
             <p className="card-city">{active.label}</p>
             <h2 className="card-name">{active.member.name}</h2>
             {active.member.role && <p className="card-role">{active.member.role}</p>}
@@ -176,24 +217,8 @@ export default function Location03() {
               )}
             </dl>
           </div>
-        )}
-        {locations.map((loc) => (
-          <button
-            key={loc.id}
-            ref={(el) => (pointRefs.current[loc.id] = el)}
-            className="earth-point"
-            style={{ left: `${loc.point.x}%`, top: `${loc.point.y}%` }}
-            onClick={() => fly(loc)}
-            aria-label={loc.label}
-          >
-            <span className="earth-point-dot" />
-            <span className="earth-point-label">{loc.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <canvas ref={canvasRef} className="flight-canvas" />
-      <img ref={planeRef} className="plane" src="public/locations/usagi.svg" alt="" />
+        </>
+      )}
     </div>
   );
 }

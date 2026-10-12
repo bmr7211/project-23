@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './PopupShell.css';
-import LeatherBg from '../components/LeatherBg';
 
 export default function PopupShell({ leather, bare, children }) {
   const navigate = useNavigate();
@@ -29,7 +28,6 @@ export default function PopupShell({ leather, bare, children }) {
         className={`popup-panel ${bare ? 'is-bare' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {!bare && leather != null && <LeatherBg index={leather} />}
         <button className="popup-close" onClick={close} aria-label="닫기">x</button>
         <div className="popup-content">{children}</div>
       </div>

@@ -4,11 +4,11 @@ const W = 1280, H = 720, N = 5, BASE_H = 432, BASE_W = 180;
 const LINE = 0.5;
 const UP = 0.5;
 const CHARS = [
-  { id: '01', href: '/album', body: '#780000', video: 'public/walkers/album_walker.webm', leather: { type: 0, color: [.03, .03, .034], gloss: 1.0, bump: 30 } },
-  { id: '02', href: '/project', body: '#939100', video: 'public/walkers/album_walker.webm', leather: { type: 1, color: [.27, .035, .04], gloss: .35, bump: 2.5 } },
-  { id: '03', href: '/location', noFlood: true, body: '#009552', video: 'public/walkers/album_walker.webm', leather: { type: 2, color: [.13, .085, .06], gloss: .5, bump: 5 } },
-  { id: '04', href: '/lookbook', body: '#00458a', video: 'public/walkers/album_walker.webm', leather: { type: 3, color: [.095, .1, .105], gloss: .6, bump: 4 } },
-  { id: '05', href: '/archive', noFlood: true, body: '#8d008f', video: 'public/walkers/album_walker.webm', leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
+  { id: '01', href: '/album', photo: '/leathers/leather.jpg', body: '#780000', video: '/walkers/album_walker.webm', leather: { type: 0, color: [.03, .03, .034], gloss: 1.0, bump: 30 } },
+  { id: '02', href: '/project', photo: '/leathers/leather.jpg', body: '#939100', video: '/walkers/album_walker.webm', leather: { type: 1, color: [.27, .035, .04], gloss: .35, bump: 2.5 } },
+  { id: '03', href: '/location', photo: '/leathers/leather.jpg', noFlood: true, body: '#009552', video: '/walkers/album_walker.webm', leather: { type: 2, color: [.13, .085, .06], gloss: .5, bump: 5 } },
+  { id: '04', href: '/lookbook', photo: '/leathers/leather.jpg', body: '#00458a', video: '/walkers/album_walker.webm', leather: { type: 3, color: [.095, .1, .105], gloss: .6, bump: 4 } },
+  { id: '05', href: '/archive', photo: '/leathers/leather.jpg', noFlood: true, body: '#8d008f', video: '/walkers/album_walker.webm', leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
 ];
 const MIN_S = 0.1; // 왼쪽 끝 크기 (작을수록 멀어 보임)
 const MAX_S = 2.95; // 오른쪽 끝 크기 (1.65를 넘으면 위아래가 살짝 잘림)
@@ -104,7 +104,7 @@ shade=mix(.25,1.,smoothstep(.585,.85,v));
 }
 vec2 ad=abs(px-uArea.xy)-uArea.zw;float clipv=-max(ad.x,ad.y)+(fbm(px/45.)-.5)*28.-6.;float clip=smoothstep(0.,4.,clipv);a*=clip;wa*=clip;add*=clip;
 if(fl>0.){a=max(a,fl);shade=mix(shade,1.,fl);wa*=(1.-fl);add*=(1.-fl);}
-vec3 L=a>.001?leather(uv,idx,px)*shade+add:vec3(0.);
+vec3 L=a>.001?lt(uv,idx).rgb*shade+add:vec3(0.);
 o=vec4(L*a+w*wa*(1.-a),a+wa*(1.-a));
 }`;
 
@@ -132,6 +132,7 @@ const figs = CHARS.map((c, i) => {
     const f = { c, i, el, lag: 0, locked: false, p: 0, x: 0, y: 0, s: 1, legs: null, inner: null };
     if (c.video) {
     const v = document.createElement('video'); Object.assign(v, { src: c.video, muted: true, loop: true, autoplay: true, playsInline: true });
+    f.v = v;
     v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%'; el.appendChild(v);
     } else {
     const inner = mk('div', 'position:absolute;inset:0', el);
@@ -167,6 +168,25 @@ if (gl) {
     CHARS.forEach((c, i) => { gl.viewport(0, i * H, W, H); gl.uniform2f(bake.u('uRes'), W, H); gl.uniform2f(bake.u('uOff'), 0, i * H);
     gl.uniform1i(bake.u('uType'), c.leather.type); gl.uniform3fv(bake.u('uColor'), c.leather.color); gl.uniform1f(bake.u('uSeed'), i * 3.7); gl.drawArrays(gl.TRIANGLES, 0, 3); });
     G = { sim: prog(SIM), disp: prog(DISP), atlas, m: [tex(W, H, flt), tex(W, H, flt)], cur: 0 };
+    
+    // 사진이 있는 인물은 코드 가죽 대신 사진으로 덮어쓰기
+    CHARS.forEach((c, i) => {
+      if (!c.photo) return;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const cv = document.createElement('canvas');
+        cv.width = W; cv.height = H;
+        const k = Math.max(W / img.width, H / img.height);   // 무대를 꽉 채우게(cover)
+        const dw = img.width * k, dh = img.height * k;
+        cv.getContext('2d').drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+        gl.bindTexture(gl.TEXTURE_2D, G.atlas.t);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, i * H, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      };
+      img.src = c.photo;
+    });
 } else console.warn('Stage23: WebGL2 unavailable — reveal disabled');
 
 // ---- state
@@ -214,6 +234,22 @@ const inAreaA = (a, m) => Math.abs(m.x - a.cx) < a.rx && Math.abs(m.y - a.cy) < 
 const zoneArea = () => { const l = zoneEl ? zoneEl.offsetLeft : W * .37, t = zoneEl ? zoneEl.offsetTop : H * .08, w = zoneEl ? zoneEl.offsetWidth : W * .26, h = zoneEl ? zoneEl.offsetHeight : H * .84; return { cx: l + w / 2, cy: t + h / 2, rx: w / 2, ry: h / 2 }; };
 const inArea = (f, m) => { const a = area(f); const dx = (m.x - a.cx) / a.rx, dy = (m.y - a.cy) / a.ry; return dx * dx + dy * dy < 1; };
 
+// 모든 인물 영상을 같은 시계에 맞추기
+const SYNC_TOL = 0.1;
+const syncWalk = (v, sec) => {
+  if (v.readyState < 2 || !v.duration) return;
+  if (v.paused && !v._retry) { // 멈췄으면 다시 틀기
+    v._retry = true;
+    v.play().catch(() => {}).finally(() => { v._retry = false; });
+  }
+  const d = v.duration;
+  const target = sec % d; // 지금 있어야 할 위치
+  let diff = v.currentTime - target;
+  if (diff > d / 2) diff -= d;
+  if (diff < -d / 2) diff += d;
+  if (Math.abs(diff) > SYNC_TOL) v.currentTime = target;
+};
+
 let raf, prev = performance.now();
 const frame = now => {
     raf = requestAnimationFrame(frame);
@@ -236,7 +272,8 @@ const frame = now => {
     for (const f of figs) {
     /*const ph = S.t * 5.6 + f.i * 1.3;*/
     f.el.style.transform = `translate(${f.x - BASE_W / 2}px,${f.y - BASE_H}px) scale(${f.s})`;
-    f.el.style.zIndex = Math.floor(f.p * 1000); 
+    f.el.style.zIndex = Math.floor(f.p * 1000);
+    if (f.v) syncWalk(f.v, now / 1000);
     /*if (f.inner) { f.inner.style.transform = `translateY(${-Math.abs(Math.sin(ph)) * 7}px)`; 
     f.legs[0].style.transform = `rotate(${Math.sin(ph) * 7}deg)`; 
     f.legs[1].style.transform = `rotate(${-Math.sin(ph) * 7}deg)`; }*/
