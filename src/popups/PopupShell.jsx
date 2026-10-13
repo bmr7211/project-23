@@ -28,7 +28,7 @@ export default function PopupShell({ leather, bare, children }) {
         className={`popup-panel ${bare ? 'is-bare' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="popup-close" onClick={close} aria-label="닫기">x</button>
+        <button className="popup-close" onClick={close} aria-label="닫기"></button>
         <div className="popup-content">{children}</div>
       </div>
     </div>

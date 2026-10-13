@@ -3,9 +3,11 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, useAnimations, Center } from '@react-three/drei';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import * as THREE from 'three';
+import AlbumShape from './AlbumShape';
 import './Album01.css';
 import { LYRICS } from '../data/lyrics';
 import { OBJECTS } from '../data/albumObjects';
+import AlbumTrack from './AlbumTrack';
 
 const REF_AT = 1.5; // 이 깊이에 있는 줄이 처음 열었을 때 1배(CSS 글자 크기 그대로)
 const LINE_H = 12; // 글자 한 줄 높이(px) (CSS 폰트 크기랑 같게)
@@ -17,11 +19,13 @@ const _a = new THREE.Vector3();
 const _v = new THREE.Vector3();
 
 // 오브제 사이 간격: 한 칸 갈 때마다 위로 GAP_Y, 뒤로 GAP_Z
-const START_Y = -1.5, START_Z = 2;
-const GAP_Y = 2.2, GAP_Z = 4;
+const START_Y = -1, START_Z = 2;
+const GAP_Y = 1, GAP_Z = 3;
 
 const STEP_PX = 600; // 오브제 한 칸을 넘기는 데 필요한 휠 양 (작을수록 빠름)
-const SPREAD = 0.25; // 퍼지는 정도 (0이면 퍼짐 없음, 클수록 많이 벌어짐)
+const SPREAD = 0.3; // 퍼지는 정도 (0이면 퍼짐 없음, 클수록 많이 벌어짐)
+const BEND = 0.7; // 경로 휘는 정도 (0이면 지금처럼 일직선)
+const OBJ_SCALE = 0.6; // 오브제 전체 크기 배율 (1이면 원래 크기)
 
 function Model({ url, size = 2, color, ...props }) {
   const group = useRef();
@@ -70,7 +74,7 @@ function getCircles(p, camera, size) {
   return OBJECTS.map((o, i) => {
     itemPosition(o, i, p, _v);
     const dist = camera.position.distanceTo(_v);
-    const r = (o.size / 2) / (dist * tanHalf) * (size.height / 2);
+        const r = (o.size / 2) * OBJ_SCALE / (dist * tanHalf) * (size.height / 2);
     _v.project(camera);
     return {
       x: ((_v.x + 1) / 2) * size.width,
@@ -123,6 +127,7 @@ function LyricsMover({ progress, lyricsRef }) {
 
       const cx = ((_a.x + 1) / 2) * size.width;
       const y = ((1 - _a.y) / 2) * size.height;
+      
       const half = (widths[i] * s) / 2;
       const lineH = LINE_H * s;
       const pad = PAD * s;
@@ -161,33 +166,6 @@ function LyricsMover({ progress, lyricsRef }) {
   return null;
 }
 
-function PointSphere({ size = 2, count = 4000 }) {
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    const r = size / 2;
-    const golden = Math.PI * (3 - Math.sqrt(5));
-    for (let i = 0; i < count; i++) {
-      const y = 1 - (i / (count - 1)) * 2; // 위(1)에서 아래(-1)까지
-      const ring = Math.sqrt(1 - y * y); // 그 높이에서의 둘레 반지름
-      const th = golden * i; // 황금각만큼씩 돌기
-      const jitter = r * (0.97 + Math.random() * 0.06); // 살짝 울퉁불퉁하게
-      arr[i * 3]     = Math.cos(th) * ring * jitter;
-      arr[i * 3 + 1] = y * jitter;
-      arr[i * 3 + 2] = Math.sin(th) * ring * jitter;
-    }
-    return arr;
-  }, [size, count]);
-
-  return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial color="#ffffff" size={0.035} sizeAttenuation />
-    </points>
-  );
-}
-
 // 스크롤 목표값을 부드럽게 따라가기
 function ScrollDamper({ progress }) {
   const events = useThree((s) => s.events);
@@ -204,25 +182,27 @@ function ScrollDamper({ progress }) {
 function itemPosition(o, i, p, out) {
   const t = i - p;
   const spread = Math.exp(-t * SPREAD);
-  return out.set(o.x * spread, START_Y + t * GAP_Y, START_Z - t * GAP_Z);
+  const bend = t > 0 ? BEND * t * t : 0; // 멀수록 위로 더 올라가서 곡선이 됨
+  return out.set(o.x * spread, START_Y + t * GAP_Y + bend, START_Z - t * GAP_Z);
 }
 
 // 오브제 하나: 스크롤 위치에 따라 매 프레임 자리 계산
-function Item({ o, i, progress, onHover }) {
+function Item({ o, i, progress, onHover, onSelect }) {
   const ref = useRef();
   useFrame((_, dt) => {
     const t = i - progress.current.value;
     itemPosition(o, i, progress.current.value, ref.current.position);
-    ref.current.rotation.y += dt * 0.15;
+    if (o.spin !== false) ref.current.rotation.y += dt * 0.15;
     ref.current.visible = t > -1.2;
   });
   return (
-    <group ref={ref} rotation={[0, o.rotY, 0]}>
-      <PointSphere size={o.size} />
+    <group ref={ref} rotation={[0, o.rotY, 0]} scale={OBJ_SCALE}>
+      <AlbumShape o={o}  view="album" />
       {/* 마우스 판정용 투명 구 */}
       <mesh
         onPointerOver={(e) => { e.stopPropagation(); onHover(o); }}
         onPointerOut={() => onHover((h) => (h?.id === o.id ? null : h))}
+        onClick={(e) => { e.stopPropagation(); onSelect(o); }}
       >
         <sphereGeometry args={[o.size / 2, 16, 16]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
@@ -236,13 +216,15 @@ export default function Album01() {
   const lyricsRef = useRef(null);
   const touchY = useRef(null);
   const [hovered, setHovered] = useState(null);
+  const [selected, setSelected] = useState(null);
   const lastShown = useRef(null);
   if (hovered) lastShown.current = hovered;
   const shown = hovered ?? lastShown.current;
 
   const move = (dy) => {
+    if (selected) return;
     const p = progress.current;
-    p.target = THREE.MathUtils.clamp(p.target + dy / STEP_PX, 0, OBJECTS.length - 1);
+        p.target = THREE.MathUtils.clamp(p.target + dy / STEP_PX, 0, OBJECTS.length);
   };
 
   return (
@@ -264,7 +246,7 @@ export default function Album01() {
         <LyricsMover progress={progress} lyricsRef={lyricsRef} />
         <Suspense fallback={null}>
           {OBJECTS.map((o, i) => (
-            <Item key={o.id} o={o} i={i} progress={progress} onHover={setHovered} />
+            <Item key={o.id} o={o} i={i} progress={progress} onHover={setHovered} onSelect={setSelected} />
           ))}
         </Suspense>
       </Canvas>
@@ -279,6 +261,7 @@ export default function Album01() {
         <span className="album-label-artist">{shown?.artist}</span>
         <span>{shown?.title}</span>
       </p>
+      {selected && <AlbumTrack track={selected} onBack={() => setSelected(null)} />}
     </main>
   );
 }

@@ -1,0 +1,51 @@
+.album-track {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: #000000c3;
+  color: #fff;
+}
+
+.album-track-stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* 왼쪽 위 트랙 이름 (클릭이 뒤 배경으로 통과하게) */
+.album-track-title {
+  position: absolute;
+  top: 28px;
+  left: 32px;
+  margin: 0;
+  font-size: 28px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 가운데 아래 정지 */
+/* .album-track-stop {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+} */
+
+/* 재생 시간 */
+.album-track-time {
+  position: absolute;
+  top: 28px;
+  right: 32px;
+  z-index: 1;
+  font-family: ui-monospace, monospace;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
