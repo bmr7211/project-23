@@ -12,7 +12,7 @@ export const LYRICS = [
   { text: 'Lyrics 10', side: 'left', at: 4.8, x: -5.5, size: 1.5 },
 
   { text: 'Lyrics 11', side: 'right', at: 5.0, x: 0.5, size: 1.5 },
-  { text: 'Lyrics 12', side: 'left', at: 5.5, x: 0.5, size: 1.5 },
+  { text: 'Lyrics 12', side: 'left', at: 5.5, x: -3.5, size: 1.5 },
   { text: 'Lyrics 13', side: 'right', at: 6.0, x: 0.5, size: 1.5 },
   { text: 'Lyrics 14', side: 'left', at: 6.5, x: 0.5, size: 1.5 },
   { text: 'Lyrics 15', side: 'right', at: 7.0, x: 0.5, size: 1.5 },

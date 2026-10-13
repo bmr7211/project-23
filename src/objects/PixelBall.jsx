@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { makeRandom } from './random';
 
 // 픽셀 구 : grid = 한 줄에 칸 수 (작을수록 도트가 큼)
-export default function PixelBall({ size = 2, grid = 30, color = '#e6e6e6', seed }) {
+export default function PixelBall({ size = 2, grid = 15, color = '#e6e6e6', seed }) {
   const texture = useMemo(() => {
     const rand = makeRandom(seed);
     const c = document.createElement('canvas');

@@ -1,13 +1,13 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, useAnimations, Center } from '@react-three/drei';
-import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { Preload } from '@react-three/drei';
 import * as THREE from 'three';
 import AlbumShape from './AlbumShape';
 import './Album01.css';
 import { LYRICS } from '../data/lyrics';
 import { OBJECTS } from '../data/albumObjects';
 import AlbumTrack from './AlbumTrack';
+import MixSpace from '../objects/MixSpace';
 
 const REF_AT = 1.5; // 이 깊이에 있는 줄이 처음 열었을 때 1배(CSS 글자 크기 그대로)
 const LINE_H = 12; // 글자 한 줄 높이(px) (CSS 폰트 크기랑 같게)
@@ -27,46 +27,7 @@ const SPREAD = 0.3; // 퍼지는 정도 (0이면 퍼짐 없음, 클수록 많이
 const BEND = 0.7; // 경로 휘는 정도 (0이면 지금처럼 일직선)
 const OBJ_SCALE = 0.6; // 오브제 전체 크기 배율 (1이면 원래 크기)
 
-function Model({ url, size = 2, color, ...props }) {
-  const group = useRef();
-  const { scene, animations } = useGLTF(url);
-
-  const model = useMemo(() => {
-    const m = clone(scene);
-    // 테스트용: color를 주면 모든 면을 그 색 재질로 덮어씌움
-    if (color) {
-      m.traverse((o) => {
-        if (o.isMesh) o.material = new THREE.MeshStandardMaterial({ color, roughness: 0.45 });
-      });
-    }
-    return m;
-  }, [scene, color]);
-  const { actions, names } = useAnimations(animations, group);
-
-  const scale = useMemo(() => {
-    const box = new THREE.Box3().setFromObject(model);
-    const s = box.getSize(new THREE.Vector3());
-    return size / Math.max(s.x, s.y, s.z);
-  }, [model, size]);
-
-  useEffect(() => {
-    const action = actions[names[0]];
-    if (!action) return;
-    action.reset().play();
-    action.time = Math.random() * action.getClip().duration; // 박자 엇갈리게
-    return () => action.stop();
-  }, [actions, names]);
-
-  return (
-    <group {...props}>
-      <group ref={group} scale={scale}>
-        <Center>
-          <primitive object={model} />
-        </Center>
-      </group>
-    </group>
-  );
-}
+const MIX_LIFT = 1; // 믹싱 공간을 위로 올리는 양 (화면 가운데 맞추기)
 
 // 구 5개가 지금 화면에서 차지하는 원 (x, y, 반지름 r: 단위 px)
 function getCircles(p, camera, size) {
@@ -211,6 +172,24 @@ function Item({ o, i, progress, onHover, onSelect }) {
   );
 }
 
+// 믹싱 공간
+function MixItem({ progress }) {
+  const ref = useRef();
+  const i = OBJECTS.length;
+  useFrame(() => {
+    const t = i - progress.current.value;
+    itemPosition(ANCHOR, i, progress.current.value, ref.current.position);
+    ref.current.visible = t > -1.2;
+  });
+  return (
+    <group ref={ref}>
+      <group position={[0, MIX_LIFT, 0]} rotation={[0, 0, 0]}>
+        <MixSpace />
+      </group>
+    </group>
+  );
+}
+
 export default function Album01() {
   const progress = useRef({ target: 0, value: 0 });
   const lyricsRef = useRef(null);
@@ -239,7 +218,7 @@ export default function Album01() {
         touchY.current = y;
       }}
     >
-      <Canvas camera={{ position: [0, 0, 8], fov: 45 }} gl={{ alpha: true }}>
+      <Canvas camera={{ position: [0, 0, 8], fov: 45 }} gl={{ alpha: true }} dpr={[1, 1.5]}>
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 5, 6]} intensity={2} />
         <ScrollDamper progress={progress} />
@@ -248,7 +227,9 @@ export default function Album01() {
           {OBJECTS.map((o, i) => (
             <Item key={o.id} o={o} i={i} progress={progress} onHover={setHovered} onSelect={setSelected} />
           ))}
+          <MixItem progress={progress} />
         </Suspense>
+        <Preload all />
       </Canvas>
 
       <div className="album-lyrics" ref={lyricsRef}>
