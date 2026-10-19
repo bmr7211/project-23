@@ -1,15 +1,48 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { project } from '../data/project';
+import './Project02.css';
 
 export default function Project02() {
+  const { videoId, thumb } = project;
+  const [playing, setPlaying] = useState(false);
+
+  const ytThumb = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  const embedSrc =
+    `https://www.youtube-nocookie.com/embed/${videoId}` +
+    `?autoplay=1&rel=0&playsinline=1`;
+
+  // 재생 화면
+  if (playing) {
+    return (
+      <div className="project">
+        <iframe
+          className="project-player"
+          src={embedSrc}
+          title="23 Grams project"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+
+  // 썸네일 화면
   return (
-    <>
-    <main style={{ /*minHeight: '100vh', background: '#0c0c0d',*/ 
-                height: '100%', color: '#f2efea', 
-                padding: '28px 32px', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
-        <p style={{ fontSize: 13, letterSpacing: '.18em', fontWeight: 500 }}></p>
-        <h1 style={{ fontSize: 260, fontWeight: 300, lineHeight: .8, margin: '80px 0' }}></h1>
-        <Link to="/" style={{ color: '#f2efea', fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11 }}></Link>
-    </main>
-    </>
+    <div className="project">
+      <button
+        className="project-thumb"
+        aria-label="영상 재생"
+        onClick={() => setPlaying(true)}
+      >
+        <img
+          src={thumb ?? ytThumb}
+          alt=""
+          onError={(e) => {
+            const fallback = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+          }}
+        />
+      </button>
+    </div>
   );
 }

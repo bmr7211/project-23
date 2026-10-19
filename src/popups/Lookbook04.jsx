@@ -8,13 +8,15 @@ export default function Lookbook04() {
   // 상세 화면
   if (activeLook) {
     return (
-      <div className="lookbook-detail">
-        <button className="lookbook-back" onClick={() => setActiveLook(null)}>
-          Back
-        </button>
+      <div className="lookbook-detail" onClick={() => setActiveLook(null)}>
         <div className="lookbook-detail-grid">
           {activeLook.photos.map((src, i) => (
-            <img key={i} src={src} alt={`Look ${activeLook.id} - ${i + 1}`} />
+            <img
+              key={i}
+              src={src}
+              alt={`Look ${activeLook.id} - ${i + 1}`}
+              onClick={(e) => e.stopPropagation()}
+            />
           ))}
         </div>
       </div>

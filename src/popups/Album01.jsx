@@ -4,137 +4,40 @@ import { Preload } from '@react-three/drei';
 import * as THREE from 'three';
 import AlbumShape from './AlbumShape';
 import './Album01.css';
-import { LYRICS } from '../data/lyrics';
+import { LYRICS, LYRICS_TITLE } from '../data/lyrics';
 import { OBJECTS } from '../data/albumObjects';
 import AlbumTrack from './AlbumTrack';
 import MixSpace from '../objects/MixSpace';
 
-const REF_AT = 1.5; // 이 깊이에 있는 줄이 처음 열었을 때 1배(CSS 글자 크기 그대로)
-const LINE_H = 12; // 글자 한 줄 높이(px) (CSS 폰트 크기랑 같게)
-const PAD = 16; // 구와 글자 사이 여백(px)
 const ANCHOR = { x: 0 }; // 가사 기준점 (가로 가운데)
-const MAX_SCALE = 3; // 글자가 최대 몇 배까지 커질지
-const _a = new THREE.Vector3();
-
-const _v = new THREE.Vector3();
 
 // 오브제 사이 간격: 한 칸 갈 때마다 위로 GAP_Y, 뒤로 GAP_Z
 const START_Y = -1, START_Z = 2;
 const GAP_Y = 1, GAP_Z = 3;
 
 const STEP_PX = 600; // 오브제 한 칸을 넘기는 데 필요한 휠 양 (작을수록 빠름)
+const SWIPE_PX = 50; // 좌우로 이만큼 밀어야 페이지 넘김 (작을수록 민감)
 const SPREAD = 0.3; // 퍼지는 정도 (0이면 퍼짐 없음, 클수록 많이 벌어짐)
 const BEND = 0.7; // 경로 휘는 정도 (0이면 지금처럼 일직선)
 const OBJ_SCALE = 0.6; // 오브제 전체 크기 배율 (1이면 원래 크기)
 
 const MIX_LIFT = 1; // 믹싱 공간을 위로 올리는 양 (화면 가운데 맞추기)
 
-// 구 5개가 지금 화면에서 차지하는 원 (x, y, 반지름 r: 단위 px)
-function getCircles(p, camera, size) {
-  const tanHalf = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  return OBJECTS.map((o, i) => {
-    itemPosition(o, i, p, _v);
-    const dist = camera.position.distanceTo(_v);
-        const r = (o.size / 2) * OBJ_SCALE / (dist * tanHalf) * (size.height / 2);
-    _v.project(camera);
-    return {
-      x: ((_v.x + 1) / 2) * size.width,
-      y: ((1 - _v.y) / 2) * size.height,
-      r,
-      visible: i - p > -1.2 && _v.z < 1,
-    };
-  });
-}
-
-function LyricsMover({ progress, lyricsRef }) {
-  const { camera, size } = useThree();
-  const offsets = useRef([]);
-  const refDist = useRef(null); // REF_AT 깊이까지 거리 (1배 기준)
-
-  useFrame((_, dt) => {
-    const box = lyricsRef.current;
-    if (!box) return;
-    const p = progress.current.value;
-    const lines = box.children;
-    const n = lines.length;
-
-    if (refDist.current == null) {
-      const ref = itemPosition(ANCHOR, REF_AT, 0, new THREE.Vector3());
-      refDist.current = camera.position.distanceTo(ref);
-    }
-
-    const circles = getCircles(p, camera, size);
-
-    // 줄 폭 먼저 한꺼번에 읽기
-    const widths = [];
-    for (let i = 0; i < n; i++) widths.push(lines[i].offsetWidth);
-
-    for (let i = 0; i < n; i++) {
-      const l = LYRICS[i];
-      const el = lines[i];
-
-      // 1) 이 줄의 3D 위치 → 크기 배율 → 화면 좌표
-      itemPosition({ x: l.x ?? 0 }, l.at, p, _a);
-      const dist = camera.position.distanceTo(_a);
-      const s = Math.min(MAX_SCALE, (l.size ?? 1) * refDist.current / dist);
-      _a.project(camera);
-
-      // 카메라 뒤로 지나간 줄은 숨기기 (구랑 같은 기준)
-      if (l.at - p <= -1.2 || _a.z > 1) {
-        el.style.visibility = 'hidden';
-        continue;
-      }
-      el.style.visibility = 'visible';
-
-      const cx = ((_a.x + 1) / 2) * size.width;
-      const y = ((1 - _a.y) / 2) * size.height;
-      
-      const half = (widths[i] * s) / 2;
-      const lineH = LINE_H * s;
-      const pad = PAD * s;
-      const dir = l.side === 'left' ? -1 : 1;
-
-      // 2) 정해진 방향으로만 구 피하기
-      let x = cx;
-      let moved = true;
-      let guard = 0;
-      while (moved && guard++ < 10) {
-        moved = false;
-        for (const c of circles) {
-          if (!c.visible) continue;
-          const R = c.r + pad;
-          const dy = Math.max(0, Math.abs(y - c.y) - lineH / 2);
-          if (dy >= R) continue;
-          const chord = Math.sqrt(R * R - dy * dy);
-          const left = c.x - chord;
-          const right = c.x + chord;
-          if (x + half <= left || x - half >= right) continue;
-          x = dir < 0 ? left - half : right + half;
-          moved = true;
-        }
-      }
-
-      // 3) 부드럽게 따라가서 적용
-      const target = x - cx;
-      const prev = offsets.current[i] ?? target;
-      const off = THREE.MathUtils.damp(prev, target, 12, dt);
-      offsets.current[i] = off;
-
-      el.style.transform =
-        `translate(${cx + off - half}px, ${y - lineH / 2}px) scale(${s})`;
-    }
-  });
-  return null;
-}
-
-// 스크롤 목표값을 부드럽게 따라가기
-function ScrollDamper({ progress }) {
+// 스크롤
+function ScrollDamper({ progress, onMix }) {
   const events = useThree((s) => s.events);
+  const wasAtMix = useRef(false);
   useFrame((_, dt) => {
     const p = progress.current;
     const before = p.value;
     p.value = THREE.MathUtils.damp(p.value, p.target, 4, dt);
     if (Math.abs(p.value - before) > 1e-4) events.update?.();
+
+    const atMix = p.value > OBJECTS.length - 0.05; // 마지막 칸에 거의 다 왔으면 도착
+    if (atMix !== wasAtMix.current) {
+      wasAtMix.current = atMix;
+      onMix(atMix);
+    }
   });
   return null;
 }
@@ -192,25 +95,55 @@ function MixItem({ progress }) {
 
 export default function Album01() {
   const progress = useRef({ target: 0, value: 0 });
-  const lyricsRef = useRef(null);
   const touchY = useRef(null);
   const [hovered, setHovered] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [atMix, setAtMix] = useState(false);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
   const lastShown = useRef(null);
   if (hovered) lastShown.current = hovered;
   const shown = hovered ?? lastShown.current;
 
+  const swipeX = useRef(0); // 이번 스와이프에서 민 양
+  const swipeLock = useRef(false); // 한 번 넘겼으면 잠금
+  const swipeTimer = useRef(null);
+
   const move = (dy) => {
-    if (selected) return;
+    if (selected || lyricsOpen) return;
     const p = progress.current;
         p.target = THREE.MathUtils.clamp(p.target + dy / STEP_PX, 0, OBJECTS.length);
+  };
+
+  const swipe = (dx) => {
+    if (selected) return;
+
+    // 이벤트가 0.2초 동안 안 들어오면 스와이프 끝난 걸로 보고 초기화
+    clearTimeout(swipeTimer.current);
+    swipeTimer.current = setTimeout(() => {
+      swipeX.current = 0;
+      swipeLock.current = false;
+    }, 200);
+
+    if (swipeLock.current) return;
+    swipeX.current += dx;
+
+    if (swipeX.current > SWIPE_PX && atMix && !lyricsOpen) {
+      setLyricsOpen(true);   // 오른쪽 → 왼쪽: 가사 페이지
+      swipeLock.current = true;
+    } else if (swipeX.current < -SWIPE_PX && lyricsOpen) {
+      setLyricsOpen(false);  // 왼쪽 → 오른쪽: 믹싱 공간
+      swipeLock.current = true;
+    }
   };
 
   return (
     <main
       className="album"
       style={{ cursor: hovered ? 'pointer' : 'default' }}
-      onWheel={(e) => move(-e.deltaY)}
+      onWheel={(e) => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) swipe(e.deltaX);
+        else move(-e.deltaY);
+      }}
       onTouchStart={(e) => { touchY.current = e.touches[0].clientY; }}
       onTouchMove={(e) => {
         const y = e.touches[0].clientY;
@@ -218,30 +151,54 @@ export default function Album01() {
         touchY.current = y;
       }}
     >
-      <Canvas camera={{ position: [0, 0, 8], fov: 45 }} gl={{ alpha: true }} dpr={[1, 1.5]}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[3, 5, 6]} intensity={2} />
-        <ScrollDamper progress={progress} />
-        <LyricsMover progress={progress} lyricsRef={lyricsRef} />
-        <Suspense fallback={null}>
-          {OBJECTS.map((o, i) => (
-            <Item key={o.id} o={o} i={i} progress={progress} onHover={setHovered} onSelect={setSelected} />
-          ))}
-          <MixItem progress={progress} />
-        </Suspense>
-        <Preload all />
-      </Canvas>
+      <div className={`album-slider ${lyricsOpen ? 'is-lyrics' : ''}`}>
+        {/* 왼쪽 칸: 오브제 + 믹싱 공간 */}
+        <section className="album-pane">
+          <Canvas camera={{ position: [0, 0, 8], fov: 45 }} gl={{ alpha: true }} dpr={[1, 1.5]}>
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[3, 5, 6]} intensity={2} />
+            <ScrollDamper progress={progress} onMix={setAtMix} />
+            <Suspense fallback={null}>
+              {OBJECTS.map((o, i) => (
+                <Item key={o.id} o={o} i={i} progress={progress} onHover={setHovered} onSelect={setSelected} />
+              ))}
+              <MixItem progress={progress} />
+            </Suspense>
+            <Preload all />
+          </Canvas>
 
-      <div className="album-lyrics" ref={lyricsRef}>
-        {LYRICS.map((l, i) => (
-          <p key={i}>{l.text || '\u00A0'}</p>
-        ))}
+          <button
+            className={`album-arrow ${atMix && !lyricsOpen ? 'is-on' : ''}`}
+            onClick={() => setLyricsOpen(true)}
+            aria-label="가사 보기"
+          >→</button>
+
+          <p className={`album-label ${hovered ? 'is-on' : ''}`}>
+            <span className="album-label-artist">{shown?.artist}</span>
+            <span>{shown?.title}</span>
+          </p>
+        </section>
+
+        {/* 오른쪽 칸: 가사 페이지 */}
+        <section className="album-pane album-lyrics-page">
+          <button
+            className={`album-arrow is-left ${lyricsOpen ? 'is-on' : ''}`}
+            onClick={() => setLyricsOpen(false)}
+            aria-label="믹싱 공간으로"
+          >←</button>
+
+          <h2 className="album-lyrics-title">{LYRICS_TITLE}</h2>
+          <div className="album-lyrics-body">
+            {LYRICS.map((s) => (
+              <div className="album-lyrics-part" key={s.part}>
+                <h3>{s.part}</h3>
+                {s.lines.map((line, i) => <p key={i}>{line}</p>)}
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      <p className={`album-label ${hovered ? 'is-on' : ''}`}>
-        <span className="album-label-artist">{shown?.artist}</span>
-        <span>{shown?.title}</span>
-      </p>
       {selected && <AlbumTrack track={selected} onBack={() => setSelected(null)} />}
     </main>
   );

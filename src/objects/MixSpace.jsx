@@ -5,7 +5,7 @@ import { MIX } from '../data/mix';
 import * as THREE from 'three';
 
 // 공간 크기: 가로(팬) W, 세로(음역대) H, 깊이(볼륨) D
-export const W = 6.31, H = 4.13, D = 2;
+export const W = 6.0, H = 3.8, D = 2;
 const F_MIN = 20, F_MAX = 20000;
 
 // 값 → 위치 변환 (3단계에서 악기 놓을 때도 씀)
@@ -99,8 +99,8 @@ export default function MixSpace() {
         <Line points={[[0, -H / 2, -D / 2], [0, H / 2, -D / 2]]} color={COLOR} transparent opacity={0.15} />
 
         {/* 바닥 앞: L / R */}
-        <Text position={[-W / 2, -H / 2 - 0.2, D / 2]} anchorX="left" fontSize={0.14} color={COLOR}>L</Text>
-        <Text position={[W / 2, -H / 2 - 0.2, D / 2]} anchorX="right" fontSize={0.14} color={COLOR}>R</Text>
+        {/* <Text position={[-W / 2, -H / 2 - 0.2, D / 2]} anchorX="left" fontSize={0.14} color={COLOR}>L</Text>
+        <Text position={[W / 2, -H / 2 - 0.2, D / 2]} anchorX="right" fontSize={0.14} color={COLOR}>R</Text> */}
 
         {/* 악기들 */}
         {MIX.map((m, i) => (

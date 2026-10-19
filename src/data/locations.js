@@ -2,7 +2,7 @@ export const locations = [
     {
         id: "location01",
         label: "Location01",
-        point: { x: 62, y: 38 }, // 지구 이미지 안에서의 위치 (%)
+        point: { x: 62, y: 48 }, // 지구 이미지 안에서의 위치 (%)
         photo: "/locations/location01.jpeg",
         member: {
             name: "Ha Eun Kim",
@@ -28,7 +28,7 @@ export const locations = [
     { 
         id: "location03", 
         label: "Location03", 
-        point: { x: 48, y: 55 }, 
+        point: { x: 48, y: 65 }, 
         photo: "/locations/location03.jpg", 
         member: { 
             name: "Ji Yoon Shin", 

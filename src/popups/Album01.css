@@ -30,26 +30,6 @@
   opacity: 0.5;
 }
 
-.album-lyrics {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
-  pointer-events: none;
-  font: 12px/1 ui-monospace, Menlo, monospace;
-  letter-spacing: 0.06em;
-  color: #f2efea;
-}
-
-.album-lyrics p {
-  position: absolute;
-  top: 0;
-  left: 0;
-  margin: 0;
-  white-space: nowrap;
-  transform-origin: 0 0;
-}
-
 .album-track {
   position: absolute;
   inset: 0;
@@ -71,4 +51,98 @@
   color: #fff;
   cursor: pointer;
   font: inherit;
+}
+
+.album-arrow {
+  position: absolute;
+  right: 45px;
+  top: 50%;
+  z-index: 2;
+  padding: 8px;
+  background: none;
+  border: 0;
+  font: 16px/1 ui-monospace, Menlo, monospace;
+  color: #f2efea;
+  cursor: pointer;
+  opacity: 0;
+  transform: translate(-4px, -50%);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+
+.album-arrow.is-on {
+  opacity: 1;
+  transform: translate(0, -50%);
+  pointer-events: auto;
+}
+
+.album {
+  overflow: hidden; /* 기존 .album 블록에 이 줄 추가 */
+}
+
+.album-slider {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.album-slider.is-lyrics {
+  transform: translateX(-50%);
+}
+
+.album-pane {
+  position: relative;
+  width: 50%;
+  height: 100%;
+}
+
+/* 왼쪽 화살표: 가사 페이지 왼쪽 중간 */
+.album-arrow.is-left {
+  right: auto;
+  left: 25px;
+  transform: translate(4px, -50%);
+}
+.album-arrow.is-left.is-on {
+  transform: translate(0, -50%);
+}
+
+.album-lyrics-page {
+  box-sizing: border-box;
+  padding: 64px 80px;
+  overflow-y: auto;
+  color: #f2efea;
+  font: 12px/1.9 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.04em;
+}
+
+.album-lyrics-title {
+  margin: 0 0 32px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  opacity: 0.5;
+}
+
+.album-lyrics-body {
+  columns: 3;
+  column-gap: 48px;
+}
+
+.album-lyrics-part {
+  break-inside: avoid;
+  margin-bottom: 28px;
+}
+
+.album-lyrics-part h3 {
+  margin: 0 0 6px;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.album-lyrics-part p {
+  margin: 0;
 }

@@ -4,6 +4,7 @@ import Home00 from './components/Home00';
 import PopupShell from './popups/PopupShell';
 import Bgm from './components/Bgm.jsx';
 
+const EarthRender = lazy(() => import('./popups/EarthRender'));
 const Album01 = lazy(() => import('./popups/Album01'));
 const Project02  = lazy(() => import('./popups/Project02'));
 const Location03 = lazy(() => import('./popups/Location03'));
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/location/*" element={popup(Location03, null)} />
         <Route path="/lookbook/*" element={popup(Lookbook04, 3)} />
         <Route path="/archive/*" element={popup(Archive05, 4, true)} />
+        <Route path="/earth-render" element={<Suspense fallback={null}><EarthRender /></Suspense>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
