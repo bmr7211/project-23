@@ -1,11 +1,11 @@
 export const locations = [
     {
         id: "location01",
-        label: "Location01",
+        label: "소속",
         point: { x: 62, y: 48 }, // 지구 이미지 안에서의 위치 (%)
         photo: "/locations/black.png",
         member: {
-            name: "Ha Eun Kim",
+            name: "Kim Ha Eun",
             role: "Track maker",
             email: "email@example.com",
             instagram: "@instagram",
@@ -14,11 +14,11 @@ export const locations = [
     },
     { 
         id: "location02", 
-        label: "Location02", 
+        label: "소속", 
         point: { x: 70, y: 66 }, 
         photo: "/locations/black.png", 
         member: { 
-                name: "Yeon Ji Seo", 
+                name: "Seo Yeon Ji", 
                 role: "Top liner", 
                 email: "email@example.com",
                 instagram: "@instagram",
@@ -27,12 +27,12 @@ export const locations = [
     },
     { 
         id: "location03", 
-        label: "Location03", 
+        label: "Hanyang Women's University", 
         point: { x: 48, y: 65 }, 
         photo: "/locations/black.png", 
         member: { 
-            name: "Ji Yoon Shin", 
-            role: "Develper", 
+            name: "Shin Ji Yoon", 
+            role: "Developer", 
             email: "email@example.com",
             instagram: "@instagram",
             phone: "010-0000-0000",
@@ -40,11 +40,11 @@ export const locations = [
     },
     { 
         id: "location04", 
-        label: "Location04", 
+        label: "소속", 
         point: { x: 28, y: 52 }, 
         photo: "/locations/black.png", 
         member: { 
-            name: "Soo Min Lee", 
+            name: "Lee Soo Min", 
             role: "Top liner", 
             email: "email@example.com",
             instagram: "@instagram",

@@ -165,7 +165,7 @@ export default function Location03() {
       </div>
 
       <canvas ref={canvasRef} className="flight-canvas" />
-      <img ref={planeRef} className="plane" src="/locations/usagi.svg" alt="" />
+      <img ref={planeRef} className="plane" src="/locations/paper_plane.svg" alt="" />
 
       {dive && (
         <Dive
@@ -184,9 +184,9 @@ export default function Location03() {
         <>
           <button className="loc-back" onClick={back}>Back to EARTH</button>
           <div className="card" key={`card-${active.id}`}>
-            <p className="card-city">{active.label}</p>
-            <h2 className="card-name">{active.member.name}</h2>
             {active.member.role && <p className="card-role">{active.member.role}</p>}
+            <h2 className="card-name">{active.member.name}</h2>
+            <p className="card-city">{active.label}</p>
 
             <dl className="card-info">
               {active.member.email && (

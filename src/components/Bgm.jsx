@@ -19,7 +19,7 @@ export default function Bgm() {
     a.volume = 0.5;
     if (!bgmOff) a.play().catch(() => {});
     setGate('fading');
-    setTimeout(() => setGate('gone'), 600); // CSS 페이드 시간과 맞춤
+    setTimeout(() => setGate('gone'), 600);
   };
 
   // Project 열리면 멈춤, 닫히면 이어서 재생
@@ -31,7 +31,7 @@ export default function Bgm() {
 
   return (
     <>
-      <audio ref={audioRef} src="/audio/bgm.mp3" loop preload="auto" />
+      <audio ref={audioRef} src="/audio/audio_23g.mp3" loop preload="auto" />
       {gate !== 'gone' && (
         <div className={`intro ${gate === 'fading' ? 'is-fading' : ''}`} onClick={enter}>
           <p className="intro-title">project-23</p>
