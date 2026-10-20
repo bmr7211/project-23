@@ -4,11 +4,11 @@ const W = 1280, H = 720, N = 5, BASE_H = 432, BASE_W = 180;
 const LINE = 0.5;
 const UP = 0.5;
 const CHARS = [
-  { id: '01', href: '/album', photo: '/leathers/leather01.jpg', body: '#780000', video: '/walkers/album_walker.webm', leather: { type: 0, color: [.03, .03, .034], gloss: 1.0, bump: 30 } },
-  { id: '02', href: '/project', photo: '/leathers/leather.jpg', body: '#939100', video: '/walkers/album_walker.webm', leather: { type: 1, color: [.27, .035, .04], gloss: .35, bump: 2.5 } },
-  { id: '03', href: '/location', photo: '/leathers/leather.jpg', noFlood: false, body: '#009552', video: '/walkers/album_walker.webm', leather: { type: 2, color: [.13, .085, .06], gloss: .5, bump: 5 } },
-  { id: '04', href: '/lookbook', photo: '/leathers/leather.jpg', body: '#00458a', video: '/walkers/album_walker.webm', leather: { type: 3, color: [.095, .1, .105], gloss: .6, bump: 4 } },
-  { id: '05', href: '/archive', photo: '/leathers/leather.jpg', noFlood: true, body: '#8d008f', video: '/walkers/album_walker.webm', leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
+  { id: '01', href: '/album', photo: '/leathers/leather_album.png', body: '#780000', video: '/walkers/album_walker.webm', leather: { type: 0, color: [.03, .03, .034], gloss: 1.0, bump: 30 } },
+  { id: '02', href: '/project', photo: '/leathers/leather_project.png', body: '#939100', video: '/walkers/album_walker.webm', leather: { type: 1, color: [.27, .035, .04], gloss: .35, bump: 2.5 } },
+  { id: '03', href: '/location', photo: '/leathers/leather_location.png', noFlood: false, body: '#009552', video: '/walkers/album_walker.webm', leather: { type: 2, color: [.13, .085, .06], gloss: .5, bump: 5 } },
+  { id: '04', href: '/lookbook', photo: '/leathers/leather_lookbook.png', body: '#00458a', video: '/walkers/album_walker.webm', leather: { type: 3, color: [.095, .1, .105], gloss: .6, bump: 4 } },
+  { id: '05', href: '/archive', photo: '/leathers/leather_archive.png', noFlood: false, body: '#8d008f', video: '/walkers/album_walker.webm', leather: { type: 4, color: [.024, .024, .027], gloss: .75, bump: 12 } },
 ];
 const MIN_S = 0.2; // 왼쪽 끝 크기 (작을수록 멀어 보임)
 const MAX_S = 2.9; // 오른쪽 끝 크기 (1.65를 넘으면 위아래가 살짝 잘림)
