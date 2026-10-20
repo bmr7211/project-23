@@ -38,14 +38,14 @@ function getSoftTexture() {
 }
 
 // 악기 하나: 음역대만큼 세로로 늘린 흐릿한 덩어리
-function Instrument({ name, pan, low, high, vol, color, index }) {
+function Instrument({ name, pan, low, high, vol, width, color, index }) {
   const groupRef = useRef();
   const blobRef = useRef();
 
   const top = freqToY(high);
   const bottom = freqToY(low);
   const h = Math.max(top - bottom, 0.2) * 1.25; // 가장자리가 흐려지는 만큼 조금 크게
-  const w = 0.5 + 0.4 * vol;                    // 볼륨 클수록 두껍게
+  const w = width ?? (0.3 + 0.3 * vol);
   const x = panToX(pan);
   const y = (top + bottom) / 2;
   const z = volToZ(vol);

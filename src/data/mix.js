@@ -9,10 +9,11 @@ export const MIX = [
     },
     { name: 'Bass', 
         pan: 0, low: 50, high: 400, vol: 0.85, 
+        width: 2.5, 
         color: '#ff9a3d' 
     },
     { name: 'Snare', 
-        pan: 0.05, low: 180, high: 5000, vol: 0.75, 
+        pan: 0.00, low: 180, high: 5000, vol: 0.75, 
         color: '#f3e36b' 
     },
     { name: 'Hi-hat', 
@@ -21,7 +22,7 @@ export const MIX = [
         color: '#bff0ff' 
     },
     { name: 'Vocal', 
-        pan: 0, low: 150, high: 8000, vol: 1.0, 
+        pan: 0, low: 1500, high: 8000, vol: 1.0, 
         color: '#ffffff'
     },
     { name: 'Guitar', 

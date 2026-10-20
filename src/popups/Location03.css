@@ -79,12 +79,13 @@
 .card {
   position: absolute;
   left: 50%;
-  bottom: 40px;
+  bottom: 60px;
   transform: translateX(-50%);
   width: min(360px, calc(100% - 32px));
   padding: 24px 28px;
   color: #fff;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(56, 52, 52, 0.45);
+  box-shadow: 10px 10px 5px rgba(54, 53, 53, 0.626);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 12px;
   backdrop-filter: blur(12px);
@@ -143,7 +144,7 @@
   padding: 8px 0;
   border: 0;
   background: none;
-  color: #000;
+  color: #fff;
   font-size: 10px;
   letter-spacing: 0.16em;
   cursor: pointer;

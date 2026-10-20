@@ -3,7 +3,7 @@ export const locations = [
         id: "location01",
         label: "Location01",
         point: { x: 62, y: 48 }, // 지구 이미지 안에서의 위치 (%)
-        photo: "/locations/location01.jpeg",
+        photo: "/locations/black.png",
         member: {
             name: "Ha Eun Kim",
             role: "Track maker",
@@ -16,7 +16,7 @@ export const locations = [
         id: "location02", 
         label: "Location02", 
         point: { x: 70, y: 66 }, 
-        photo: "/locations/location02.jpeg", 
+        photo: "/locations/black.png", 
         member: { 
                 name: "Yeon Ji Seo", 
                 role: "Top liner", 
@@ -29,7 +29,7 @@ export const locations = [
         id: "location03", 
         label: "Location03", 
         point: { x: 48, y: 65 }, 
-        photo: "/locations/location03.jpg", 
+        photo: "/locations/black.png", 
         member: { 
             name: "Ji Yoon Shin", 
             role: "Develper", 
@@ -42,7 +42,7 @@ export const locations = [
         id: "location04", 
         label: "Location04", 
         point: { x: 28, y: 52 }, 
-        photo: "/locations/location04.jpg", 
+        photo: "/locations/black.png", 
         member: { 
             name: "Soo Min Lee", 
             role: "Top liner", 
