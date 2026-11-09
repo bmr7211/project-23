@@ -9,6 +9,7 @@ import Model from '../objects/Model';
 import Wave from '../objects/Wave';
 import Morph from '../objects/Morph';
 import Swarm from '../objects/Swarm';
+import Bust from '../objects/Bust';
 
 // type 보고 오브제 모양 고르기 (새 종류는 여기에 case 추가)
 export default function AlbumShape({ o, view = 'track' }) {
@@ -41,6 +42,9 @@ export default function AlbumShape({ o, view = 'track' }) {
         );
     case 'swarm':
         return <Swarm size={o.size} count={o.count} color={o.color} seed={o.id} />;
+    case 'bust': 
+        return <Bust size={o.size} />;
+
     case 'points':
     default:
       return <PointSphere size={o.size} />;

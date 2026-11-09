@@ -4,3 +4,5 @@ export const panelRect = () => {
   const h = Math.min(720, innerHeight * 0.86); // 높이: 최대 720px, 화면 높이의 86%
   return { left: (innerWidth - w) / 2, top: (innerHeight - h) / 2, width: w, height: h };
 };
+
+export const nav = { fromStage: false };

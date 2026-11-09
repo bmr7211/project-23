@@ -25,16 +25,18 @@ export default function Lookbook04() {
 
   // 5장 그리드 (1단계 그대로)
   return (
-    <div className="lookbook-grid">
-      {looks.map((look) => (
-        <button
-          key={look.id}
-          className="lookbook-thumb"
-          onClick={() => setActiveLook(look)}
-        >
-          <img src={look.thumb} alt={`Look ${look.id}`} />
-        </button>
-      ))}
+    <div className="lookbook-stage">
+      <div className="lookbook-grid">
+        {looks.map((look) => (
+          <button
+            key={look.id}
+            className="lookbook-thumb"
+            onClick={() => setActiveLook(look)}
+          >
+            <img src={look.thumb} alt={`Look ${look.id}`} />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -174,7 +174,7 @@ export default function Album01() {
           >→</button>
 
           <p className={`album-label ${hovered ? 'is-on' : ''}`}>
-            <span className="album-label-artist">{shown?.artist}</span>
+            {/* <span className="album-label-artist">{shown?.artist}</span> */}
             <span>{shown?.title}</span>
           </p>
         </section>
