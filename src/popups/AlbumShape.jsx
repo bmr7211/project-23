@@ -10,9 +10,11 @@ import Wave from '../objects/Wave';
 import Morph from '../objects/Morph';
 import Swarm from '../objects/Swarm';
 import Bust from '../objects/Bust';
+import Balloons from '../objects/Balloons';
+import Splash from '../objects/Splash';
 
 // type 보고 오브제 모양 고르기 (새 종류는 여기에 case 추가)
-export default function AlbumShape({ o, view = 'track' }) {
+export default function AlbumShape({ o, view = 'track', audioRef }) {
   switch (o.type) {
     case 'blob':
         return <Blob size={o.size} colors={o.colors} />;
@@ -24,7 +26,7 @@ export default function AlbumShape({ o, view = 'track' }) {
             </group>
         );
     case 'pixels':
-        return <PixelBall size={o.size} grid={o.grid} color={o.color} seed={o.id} />;
+        return <PixelBall size={o.size} grid={o.grid} color={o.color} seed={o.seed ?? o.id} />;
     case 'rings':
         return <Rings size={o.size} count={o.count} color={o.color} seed={o.id} />;
     case 'wire':
@@ -44,6 +46,10 @@ export default function AlbumShape({ o, view = 'track' }) {
         return <Swarm size={o.size} count={o.count} color={o.color} seed={o.id} />;
     case 'bust': 
         return <Bust size={o.size} />;
+    case 'splash':
+        return <Splash size={o.size} color={o.color} seed={o.id} audioRef={audioRef} view={view} />;
+    case 'balloons':
+        return <Balloons size={o.size} cols={o.cols} rows={o.rows} color={o.color} seed={o.id} audioRef={audioRef} view={view} />;
 
     case 'points':
     default:

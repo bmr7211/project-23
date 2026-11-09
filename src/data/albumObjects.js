@@ -13,15 +13,16 @@ export const OBJECTS = [
     desc: 'TRACK 02 설명 들어갈 자리', 
     audio: '/audio/verse_drums.mp3' 
   },
-  { id: 'o3', type: 'image', 
-    src: '/archive/page03.jpg', spin: false, 
+  { id: 'o3', type: 'balloons', 
+    spin: false, cols: 6, rows: 4, color: '#ffffff',
     x: -1.8, size: 3.0, rotY: 0,  
     title: 'Verse Synth', 
     desc: 'TRACK 03 설명 들어갈 자리', 
     audio: '/audio/verse_synth.mp3' 
   },
-  { id: 'o4', type: 'pixels', 
-    x: 2.6,  size: 2.4, rotY: -2.0, 
+  { id: 'o4', type: 'splash', 
+    spin: false, color: '#5aa8ff',
+    x: 2.6,  size: 2.4, rotY: 0, 
     title: 'Chorus Drums', 
     desc: 'TRACK 04 설명 들어갈 자리', 
     audio: '/audio/chorus_drums.mp3' 
@@ -32,8 +33,9 @@ export const OBJECTS = [
     desc: 'TRACK 05 설명 들어갈 자리', 
     audio: '/audio/chorus_synth.mp3' 
   },
-  { id: 'o6', type: 'rings', 
-    x: 1.8, size: 3.5, rotY: 0.4,
+  { id: 'o6', type: 'pixels', 
+    seed: 'o4', // 예전 o4 픽셀 무늬 그대로 쓰기
+    x: 1.8, size: 2.4, rotY: -2.0,
     title: 'FX', 
     desc: 'TRACK 06 설명 들어갈 자리', 
     audio: '/audio/fx.mp3' 

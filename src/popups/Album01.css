@@ -4,6 +4,15 @@
   touch-action: none;
 }
 
+/* 가죽 배경 위에 까는 검은 반투명 레이어 (마지막 숫자 = 진하기, 0~1) */
+.album::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
 .album-label {
   position: absolute;
   left: 28px;
@@ -81,6 +90,7 @@
 }
 
 .album-slider {
+  position: relative; /* 검은 레이어보다 위에 그려지게 */
   display: flex;
   width: 200%;
   height: 100%;

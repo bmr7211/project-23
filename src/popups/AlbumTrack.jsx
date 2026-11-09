@@ -47,16 +47,19 @@ export default function AlbumTrack({ track, onBack }) {
             <directionalLight position={[3, 5, 6]} intensity={2} />     
             <Suspense fallback={null}>
                 <Spin on={track.spin !== false}>
-                    <AlbumShape o={{ ...track, size: SIZE }} />
-                    {/* 클릭 판정용 투명 구 */}
-                    <mesh
+                    {/* 오브제 자체를 눌러도 재생/정지 (풍선처럼 투명 구 밖으로 나가는 오브제용) */}
+                    <group
                     onClick={toggle}
                     onPointerOver={() => setHover(true)}
                     onPointerOut={() => setHover(false)}
                     >
+                    <AlbumShape o={{ ...track, size: SIZE }} audioRef={audioRef} />
+                    {/* 클릭 판정용 투명 구 */}
+                    <mesh>
                     <sphereGeometry args={[SIZE / 2, 16, 16]} />
                     <meshBasicMaterial transparent opacity={0} depthWrite={false} />
                     </mesh>
+                    </group>
                 </Spin>
             </Suspense>
             </Canvas>

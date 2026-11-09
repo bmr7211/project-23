@@ -159,7 +159,7 @@ export default function Location03() {
             aria-label={loc.label}
           >
             <span className="earth-point-dot" />
-            <span className="earth-point-label">{loc.label}</span>
+            <span className="earth-point-label">{loc.member.name}</span>
           </button>
         ))}
       </div>
